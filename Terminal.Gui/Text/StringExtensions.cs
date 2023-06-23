@@ -153,4 +153,16 @@ public static class StringExtensions {
 		}
 		return encoding.GetString (bytes.ToArray ());
 	}
+
+	/// <summary>
+	/// Converts bytes in read-only span into a string in the provided encoding (default is UTF8).
+	/// </summary>
+	/// <param name="bytes">The enumerable byte to convert.</param>
+	/// <param name="encoding">The encoding to be used.</param>
+	/// <returns></returns>
+	public static string ToString (in ReadOnlySpan<byte> bytes, Encoding encoding = null)
+	{
+		encoding ??= Encoding.UTF8;
+		return encoding.GetString (bytes);
+	}
 }
