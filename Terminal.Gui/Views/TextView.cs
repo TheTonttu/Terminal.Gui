@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -3107,7 +3108,7 @@ namespace Terminal.Gui {
 			foreach (var cell in cells) {
 				offset += cell.Rune.Encode (encoded, offset);
 			}
-			return StringExtensions.ToString (encoded);
+			return StringExtensions.ToString (encoded.AsSpan());
 		}
 
 		/// <summary>
