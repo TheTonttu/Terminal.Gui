@@ -41,7 +41,7 @@ public static class RuneExtensions {
 	public static bool IsCombiningMark (this System.Text.Rune rune)
 	{
 		UnicodeCategory category = Rune.GetUnicodeCategory (rune);
-		return Rune.GetUnicodeCategory (rune) == UnicodeCategory.NonSpacingMark
+		return category == UnicodeCategory.NonSpacingMark
 			|| category == UnicodeCategory.SpacingCombiningMark
 			|| category == UnicodeCategory.EnclosingMark;
 	}
