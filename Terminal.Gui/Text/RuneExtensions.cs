@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Text;
 using Wcwidth;
 
@@ -90,9 +91,15 @@ public static class RuneExtensions {
 	/// <returns>he number of bytes written into the destination buffer.</returns>
 	public static int Encode (this Rune rune, byte [] dest, int start = 0, int count = -1)
 	{
-		var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
-		var length = 0;
-		for (var i = 0; i < (count == -1 ? bytes.Length : count); i++) {
+		// Span length is 1-4
+		Span<byte> bytes = stackalloc byte[rune.Utf8SequenceLength];
+		int writtenBytes = rune.EncodeToUtf8 (bytes);
+
+		int bytesToCopy = count == -1
+			? writtenBytes
+			: Math.Min (count, writtenBytes);
+		int length = 0;
+		for (int i = 0; i < bytesToCopy; i++) {
 			if (bytes [i] == 0) {
 				break;
 			}
