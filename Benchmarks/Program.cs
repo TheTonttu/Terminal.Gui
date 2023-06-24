@@ -8,6 +8,8 @@ class Program {
 			switcher.Run (args);
 		} else {
 			switcher.RunAll ();
+			// Run single benchmark:
+			// BenchmarkRunner.Run<BenchmarkClass> ();
 		}
 	}
 }
