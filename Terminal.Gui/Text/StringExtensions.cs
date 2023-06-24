@@ -10,6 +10,9 @@ namespace Terminal.Gui;
 /// Extensions to <see cref="string"/> to support TUI text manipulation.
 /// </summary>
 public static class StringExtensions {
+
+	private static readonly StringBuilder CachedStringBuilder = new StringBuilder ();
+
 	/// <summary>
 	/// Repeats the string <paramref name="n"/> times.
 	/// </summary>
@@ -131,13 +134,18 @@ public static class StringExtensions {
 	/// <returns></returns>
 	public static string ToString (IEnumerable<Rune> runes)
 	{
-		var str = string.Empty;
-
-		foreach (var rune in runes) {
-			str += rune.ToString ();
+		// TODO: Use Microsoft.Extensions.ObjectPool to rent out StringBuilder.
+		lock (CachedStringBuilder) {
+			const int maxUtf16CharsPerRune = 2;
+			Span<char> chars = stackalloc char[maxUtf16CharsPerRune];
+			foreach (var rune in runes) {
+				int charsWritten = rune.EncodeToUtf16 (chars);
+				CachedStringBuilder.Append (chars [..charsWritten]);
+			}
+			string str = CachedStringBuilder.ToString();
+			CachedStringBuilder.Clear ();
+			return str;
 		}
-
-		return str;
 	}
 
 	/// <summary>
