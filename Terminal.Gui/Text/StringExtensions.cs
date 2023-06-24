@@ -114,17 +114,19 @@ public static class StringExtensions {
 	/// This is a Terminal.Gui extension method to <see cref="string"/> to support TUI text manipulation.
 	/// </remarks>
 	/// <param name="str">The string to decode.</param>
-	/// <param name="end">Index in string to stop at; if -1, use the buffer length.</param>
+	/// <param name="end">Rune index in string to stop at; if -1, use the buffer length.</param>
 	/// <returns></returns>
 	public static (Rune rune, int size) DecodeLastRune (this string str, int end = -1)
 	{
-		var rune = str.EnumerateRunes ().ToArray () [end == -1 ? ^1 : end];
-		var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
-		var operationStatus = Rune.DecodeFromUtf8 (bytes, out rune, out int bytesConsumed);
-		if (operationStatus == System.Buffers.OperationStatus.Done) {
-			return (rune, bytesConsumed);
+		int index = 0;
+		foreach (Rune rune in str.EnumerateRunes ()) {
+			if (end >= 0 && index >= end) {
+				return (rune, rune.Utf8SequenceLength);
+			}
+			index++;
 		}
-		return (Rune.ReplacementChar, 1);
+		var invalid = Rune.ReplacementChar;
+		return (invalid, invalid.Utf8SequenceLength);
 	}
 
 	/// <summary>
