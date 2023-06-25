@@ -118,7 +118,7 @@ namespace Terminal.Gui {
 
 		#region Static Members
 
-		static string StripCRLF (string str, bool keepNewLine = false)
+		internal static string StripCRLF (string str, bool keepNewLine = false)
 		{
 			var runes = str.ToRuneList ();
 			for (int i = 0; i < runes.Count; i++) {
@@ -146,7 +146,7 @@ namespace Terminal.Gui {
 			}
 			return StringExtensions.ToString (runes);
 		}
-		static string ReplaceCRLFWithSpace (string str)
+		internal static string ReplaceCRLFWithSpace (string str)
 		{
 			var runes = str.ToRuneList ();
 			for (int i = 0; i < runes.Count; i++) {

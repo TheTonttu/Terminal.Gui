@@ -35,6 +35,14 @@
     <EmbeddedResource Include="Resources\config.json" />
   </ItemGroup>
   <!-- =================================================================== -->
+  <!-- Internals visible to unit tests -->
+  <!-- =================================================================== -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <!-- =================================================================== -->
   <!-- Dependencies -->
   <!-- =================================================================== -->
   <ItemGroup>
