@@ -583,6 +583,8 @@ public class RuneTests {
 	}
 
 	[Theory]
+	[InlineData ("", 0, 0, 0)] // Off-by-one test
+	[InlineData ("H", 1, 1, 1)] // Off-by-one test
 	[InlineData ("Hello, 世界", 13, 11, 9)]   // Without Surrogate Pairs
 	[InlineData ("Hello, 𝔹𝕆𝔹", 19, 10, 13)] // With Surrogate Pairs
 	public void Test_DecodeRune_Extension (string text, int bytesLength, int colsLength, int textLength)
@@ -602,6 +604,8 @@ public class RuneTests {
 	}
 
 	[Theory]
+	[InlineData ("", 0, 0, 0, "")] // Off-by-one test
+	[InlineData ("H", 1, 1, 1, "H")] // Off-by-one test
 	[InlineData ("Hello, 世界", 13, 11, 9, "界世 ,olleH")]   // Without Surrogate Pairs
 	[InlineData ("Hello, 𝔹𝕆𝔹", 19, 10, 13, "𝔹𝕆𝔹 ,olleH")] // With Surrogate Pairs
 	public void Test_DecodeLastRune_Extension (string text, int bytesLength, int colsLength, int textLength, string encoded)
