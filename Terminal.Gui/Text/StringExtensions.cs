@@ -95,16 +95,21 @@ public static class StringExtensions {
 	/// <returns></returns>
 	public static (Rune Rune, int Size) DecodeRune (this string str, int start = 0, int count = -1)
 	{
-		var rune = str.EnumerateRunes ().ToArray () [start];
-		var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
-		if (count == -1) {
-			count = bytes.Length;
+		int index = 0;
+		foreach (Rune rune in str.EnumerateRunes ()) {
+			if (index < start) {
+				index++;
+				continue;
+			}
+
+			if (count >= 0 && rune.Utf8SequenceLength >= count) {
+				break;
+			}
+
+			return (rune, rune.Utf8SequenceLength);
 		}
-		var operationStatus = Rune.DecodeFromUtf8 (bytes, out rune, out int bytesConsumed);
-		if (operationStatus == System.Buffers.OperationStatus.Done && bytesConsumed >= count) {
-			return (rune, bytesConsumed);
-		}
-		return (Rune.ReplacementChar, 1);
+		var invalid = Rune.ReplacementChar;
+		return (invalid, invalid.Utf8SequenceLength);
 	}
 
 	/// <summary>
