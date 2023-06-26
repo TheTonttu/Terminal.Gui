@@ -16,12 +16,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = StringConcatInternal (runes);
+				str = StringConcatImplementation (runes);
 			}
 			return str;
 		}
 
-		private static string StringConcatInternal (IEnumerable<Rune> runes)
+		private static string StringConcatImplementation (IEnumerable<Rune> runes)
 		{
 			var str = string.Empty;
 
@@ -38,12 +38,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = EncodeCharsStringBuilderInternal (runes);
+				str = EncodeCharsStringBuilderImplementation (runes);
 			}
 			return str;
 		}
 
-		private static string EncodeCharsStringBuilderInternal (IEnumerable<Rune> runes)
+		private static string EncodeCharsStringBuilderImplementation (IEnumerable<Rune> runes)
 		{
 			var stringBuilder = new StringBuilder ();
 			const int maxUtf16CharsPerRune = 2;
@@ -61,12 +61,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = EncodeCharsCachedStringBuilderInternal (runes);
+				str = EncodeCharsCachedStringBuilderImplementation (runes);
 			}
 			return str;
 		}
 
-		private static string EncodeCharsCachedStringBuilderInternal (IEnumerable<Rune> runes)
+		private static string EncodeCharsCachedStringBuilderImplementation (IEnumerable<Rune> runes)
 		{
 			lock (CachedStringBuilder) {
 				const int maxUtf16CharsPerRune = 2;

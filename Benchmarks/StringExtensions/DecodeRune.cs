@@ -15,12 +15,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < Repetitions; i++) {
-				result = RunesToArrayInternal (str, start, count);
+				result = RunesToArrayImplementation (str, start, count);
 			}
 			return result;
 		}
 
-		private static (Rune Rune, int Size) RunesToArrayInternal (string str, int start = 0, int count = -1)
+		private static (Rune Rune, int Size) RunesToArrayImplementation (string str, int start = 0, int count = -1)
 		{
 			var rune = str.EnumerateRunes ().ToArray () [start];
 			var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
@@ -36,16 +36,16 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public (Rune rune, int size) EnumerateEachRunes (string str, int start = 0, int count = -1)
+		public (Rune rune, int size) EnumerateEachRune (string str, int start = 0, int count = -1)
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < Repetitions; i++) {
-				result = EnumerateEachRunesInternal (str, start, count);
+				result = EnumerateEachRuneImplementation (str, start, count);
 			}
 			return result;
 		}
 
-		private static (Rune Rune, int Size) EnumerateEachRunesInternal (string str, int start = 0, int count = -1)
+		private static (Rune Rune, int Size) EnumerateEachRuneImplementation (string str, int start = 0, int count = -1)
 		{
 			int index = 0;
 			foreach (Rune rune in str.EnumerateRunes ()) {
