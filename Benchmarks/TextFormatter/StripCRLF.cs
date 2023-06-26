@@ -61,8 +61,8 @@ namespace Benchmarks.TextFormatter {
 			return result;
 		}
 
-		// The implementations have a bit different outcome compared to baseline. Baseline implementation preserves CR when the string has LF+CR which seems like off-by-one error.
-		internal static string StringBuilderCharSpanSliceImplementation (string str, bool keepNewLine = false)
+		// The re-implementations have a bit different outcome compared to baseline. Baseline implementation preserves CR when the string has LF+CR which seems like off-by-one error.
+		private static string StringBuilderCharSpanSliceImplementation (string str, bool keepNewLine = false)
 		{
 			var stringBuilder = new StringBuilder();
 
@@ -107,8 +107,77 @@ namespace Benchmarks.TextFormatter {
 			return stringBuilder.ToString ();
 		}
 
+		[Benchmark]
+		[ArgumentsSource (nameof (DataSource))]
+		public string EarlyExitStringBuilderCharSpanSlice(string str, bool keepNewLine = false)
+		{
+			string result = string.Empty;
+			for (int i = 0; i < Repetitions; i++) {
+				result = EarlyExitStringBuilderCharSpanSliceImplementation (str, keepNewLine);
+			}
+			return result;
+		}
+
+		internal static string EarlyExitStringBuilderCharSpanSliceImplementation (string str, bool keepNewLine = false)
+		{
+			const string newlineChars = "\r\n";
+
+			var remaining = str.AsSpan ();
+			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
+			// Early exit to avoid StringBuilder allocation if there are no newline characters.
+			if (firstNewlineCharIndex < 0) {
+				return str;
+			}
+
+			var stringBuilder = new StringBuilder();
+			var firstSegment = remaining[..firstNewlineCharIndex];
+			stringBuilder.Append (firstSegment);
+
+			// The first newline is not skipped at this point because the "keepNewLine" condition has not been evaluated.
+			// This means there will be 1 extra iteration because the same newline index is checked again in the loop.
+			remaining = remaining [firstNewlineCharIndex..];
+
+			while (remaining.Length > 0) {
+				int newlineCharIndex = remaining.IndexOfAny (newlineChars);
+				if (newlineCharIndex < 0) {
+					break;
+				}
+
+				var segment = remaining[..newlineCharIndex];
+				stringBuilder.Append (segment);
+
+				int stride = segment.Length;
+				// Evaluate how many line break characters to preserve.
+				char newlineChar = remaining [newlineCharIndex];
+				if (newlineChar == '\n') {
+					stride++;
+					if (keepNewLine) {
+						stringBuilder.Append ('\n');
+					}
+				} else /* '\r' */ {
+					int nextCharIndex = newlineCharIndex + 1;
+					bool crlf = nextCharIndex < remaining.Length && remaining [nextCharIndex] == '\n';
+					if (crlf) {
+						stride += 2;
+						if (keepNewLine) {
+							stringBuilder.Append ('\n');
+						}
+					} else {
+						stride++;
+						if (keepNewLine) {
+							stringBuilder.Append ('\r');
+						}
+					}
+				}
+				remaining = remaining [stride..];
+			}
+			stringBuilder.Append (remaining);
+			return stringBuilder.ToString ();
+		}
+
 		public IEnumerable<object []> DataSource ()
 		{
+			// TODO: Better source texts. The 100 length does not have any newline characters which skews the numbers in favour of early exit optimization.
 			string textSource =
 				"""
 				Ĺόŕéḿ íṕśúḿ d́όĺόŕ śít́ áḿét́, ćόńśéćt́ét́úŕ ád́íṕíśćíńǵ éĺít́. Ṕŕáéśéńt́ q́úíś ĺúćt́úś éĺít́. Íńt́éǵéŕ út́ áŕćú éǵét́ d́όĺόŕ śćéĺéŕíśq́úé ḿát́t́íś áć ét́ d́íáḿ.
