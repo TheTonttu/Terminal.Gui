@@ -15,12 +15,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < Repetitions; i++) {
-				result = RunesToArrayInternal (str, end);
+				result = RunesToArrayImplementation (str, end);
 			}
 			return result;
 		}
 
-		private static (Rune rune, int size) RunesToArrayInternal (string str, int end)
+		private static (Rune rune, int size) RunesToArrayImplementation (string str, int end)
 		{
 			var rune = str.EnumerateRunes ().ToArray () [end == -1 ? ^1 : end];
 			var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
@@ -37,12 +37,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < Repetitions; i++) {
-				result = EnumerateEachRuneInternal (str, end);
+				result = EnumerateEachRuneImplementation (str, end);
 			}
 			return result;
 		}
 
-		private static (Rune rune, int size) EnumerateEachRuneInternal (string str, int end)
+		private static (Rune rune, int size) EnumerateEachRuneImplementation (string str, int end)
 		{
 			int index = 0;
 			foreach (Rune rune in str.EnumerateRunes ()) {
@@ -61,12 +61,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < Repetitions; i++) {
-				result = EnumerateEachRuneMoveEndCheckOutOfLoopInternal (str, end);
+				result = EnumerateEachRuneMoveEndCheckOutOfLoopImplementation (str, end);
 			}
 			return result;
 		}
 
-		private static (Rune rune, int size) EnumerateEachRuneMoveEndCheckOutOfLoopInternal (string str, int end)
+		private static (Rune rune, int size) EnumerateEachRuneMoveEndCheckOutOfLoopImplementation (string str, int end)
 		{
 			int index = 0;
 			if (end >= 0) {

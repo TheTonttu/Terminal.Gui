@@ -120,32 +120,49 @@ namespace Terminal.Gui {
 
 		internal static string StripCRLF (string str, bool keepNewLine = false)
 		{
-			var runes = str.ToRuneList ();
-			for (int i = 0; i < runes.Count; i++) {
-				switch ((char)runes [i].Value) {
-				case '\n':
-					if (!keepNewLine) {
-						runes.RemoveAt (i);
-					}
-					break;
+			var stringBuilder = new StringBuilder();
 
-				case '\r':
-					if ((i + 1) < runes.Count && runes [i + 1].Value == '\n') {
-						runes.RemoveAt (i);
-						if (!keepNewLine) {
-							runes.RemoveAt (i);
-						}
-						i++;
-					} else {
-						if (!keepNewLine) {
-							runes.RemoveAt (i);
-						}
+			var remaining = str.AsSpan ();
+			while (remaining.Length > 0) {
+				int nextLineBreakIndex = remaining.IndexOfAny ('\r', '\n');
+				if (nextLineBreakIndex == -1) {
+					if (str.Length == remaining.Length) {
+						return str;
 					}
+					stringBuilder.Append (remaining);
 					break;
 				}
+
+				var slice = remaining.Slice (0, nextLineBreakIndex);
+				stringBuilder.Append (slice);
+
+				// Evaluate how many line break characters to preserve.
+				int stride;
+				char lineBreakChar = remaining [nextLineBreakIndex];
+				if (lineBreakChar == '\n') {
+					stride = 1;
+					if (keepNewLine) {
+						stringBuilder.Append ('\n');
+					}
+				} else /* '\r' */ {
+					bool crlf = (nextLineBreakIndex + 1) < remaining.Length && remaining [nextLineBreakIndex + 1] == '\n';
+					if (crlf) {
+						stride = 2;
+						if (keepNewLine) {
+							stringBuilder.Append ('\n');
+						}
+					} else {
+						stride = 1;
+						if (keepNewLine) {
+							stringBuilder.Append ('\r');
+						}
+					}
+				}
+				remaining = remaining.Slice (slice.Length + stride);
 			}
-			return StringExtensions.ToString (runes);
+			return stringBuilder.ToString ();
 		}
+
 		internal static string ReplaceCRLFWithSpace (string str)
 		{
 			var runes = str.ToRuneList ();

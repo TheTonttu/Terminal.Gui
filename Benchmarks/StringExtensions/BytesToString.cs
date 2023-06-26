@@ -15,7 +15,7 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = IEnumerableToArrayInternal (bytes, ref encoding);
+				str = IEnumerableToArrayImplementation (bytes, ref encoding);
 			}
 			return str;
 		}
@@ -26,12 +26,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = IEnumerableToArrayInternal (bytes, ref encoding);
+				str = IEnumerableToArrayImplementation (bytes, ref encoding);
 			}
 			return str;
 		}
 
-		private static string IEnumerableToArrayInternal (IEnumerable<byte> bytes, ref Encoding? encoding)
+		private static string IEnumerableToArrayImplementation (IEnumerable<byte> bytes, ref Encoding? encoding)
 		{
 			if (encoding == null) {
 				encoding = Encoding.UTF8;
@@ -45,7 +45,7 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = ReadOnlySpanInternal (bytes.AsSpan (), encoding);
+				str = ReadOnlySpanImplementation (bytes.AsSpan (), encoding);
 			}
 			return str;
 		}
@@ -56,12 +56,12 @@ namespace Benchmarks.StringExtensions {
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
-				str = ReadOnlySpanInternal (CollectionsMarshal.AsSpan (bytes), encoding);
+				str = ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), encoding);
 			}
 			return str;
 		}
 
-		private static string ReadOnlySpanInternal (in ReadOnlySpan<byte> bytes, Encoding? encoding)
+		private static string ReadOnlySpanImplementation (in ReadOnlySpan<byte> bytes, Encoding? encoding)
 		{
 			encoding ??= Encoding.UTF8;
 			return encoding.GetString (bytes);
