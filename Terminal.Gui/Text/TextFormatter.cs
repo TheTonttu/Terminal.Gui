@@ -146,7 +146,7 @@ namespace Terminal.Gui {
 				stringBuilder.Append (segment);
 
 				int stride = segment.Length;
-				// Evaluate how many line break characters to preserve.
+				// Evaluate how many newline characters to preserve.
 				char newlineChar = remaining [newlineCharIndex];
 				if (newlineChar == '\n') {
 					stride++;
@@ -176,25 +176,53 @@ namespace Terminal.Gui {
 
 		internal static string ReplaceCRLFWithSpace (string str)
 		{
-			var runes = str.ToRuneList ();
-			for (int i = 0; i < runes.Count; i++) {
-				switch (runes [i].Value) {
-				case '\n':
-					runes [i] = (Rune)' ';
-					break;
+			const string newlineChars = "\r\n";
 
-				case '\r':
-					if ((i + 1) < runes.Count && runes [i + 1].Value == '\n') {
-						runes [i] = (Rune)' ';
-						runes.RemoveAt (i + 1);
-						i++;
-					} else {
-						runes [i] = (Rune)' ';
-					}
+			var remaining = str.AsSpan ();
+			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
+			// Early exit to avoid StringBuilder allocation if there are no newline characters.
+			if (firstNewlineCharIndex < 0) {
+				return str;
+			}
+
+			var stringBuilder = new StringBuilder();
+			var firstSegment = remaining[..firstNewlineCharIndex];
+			stringBuilder.Append (firstSegment);
+
+			// The first newline is not skipped at this point because the condition has not been evaluated.
+			// This means there will be 1 extra iteration because the same newline index is checked again in the loop.
+			remaining = remaining [firstNewlineCharIndex..];
+
+			while (remaining.Length > 0) {
+				int newlineCharIndex = remaining.IndexOfAny (newlineChars);
+				if (newlineCharIndex < 0) {
 					break;
 				}
+
+				var segment = remaining[..newlineCharIndex];
+				stringBuilder.Append (segment);
+
+				int stride = segment.Length;
+				// Replace newlines
+				char newlineChar = remaining [newlineCharIndex];
+				if (newlineChar == '\n') {
+					stride++;
+					stringBuilder.Append (' ');
+				} else /* '\r' */ {
+					int nextCharIndex = newlineCharIndex + 1;
+					bool crlf = nextCharIndex < remaining.Length && remaining [nextCharIndex] == '\n';
+					if (crlf) {
+						stride += 2;
+						stringBuilder.Append (' ');
+					} else {
+						stride++;
+						stringBuilder.Append (' ');
+					}
+				}
+				remaining = remaining [stride..];
 			}
-			return StringExtensions.ToString (runes);
+			stringBuilder.Append (remaining);
+			return stringBuilder.ToString ();
 		}
 
 		/// <summary>
