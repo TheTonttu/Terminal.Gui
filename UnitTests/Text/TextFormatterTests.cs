@@ -1362,7 +1362,7 @@ namespace Terminal.Gui.TextTests {
 
 		[Theory]
 		[MemberData (nameof (SplitEnvironmentNewLine))]
-		public void SplitNewLine_Ending__With_Or_Without_NewLine_Probably_CRLF (string text, IEnumerable<string> expected)
+		public void SplitNewLine_Ending_With_Or_Without_NewLine_Probably_CRLF (string text, IEnumerable<string> expected)
 		{
 			var splited = TextFormatter.SplitNewLine (text);
 			Assert.Equal (expected, splited);
@@ -1371,6 +1371,10 @@ namespace Terminal.Gui.TextTests {
 		public static IEnumerable<object []> SplitEnvironmentNewLine =>
 		new List<object []>
 		{
+			new object[] { null, new string [] { "" } },
+			new object[] { "", new string [] { "" } },
+			new object[] { $"{Environment.NewLine}", new string [] { "", "" } },
+			new object[] { $"{Environment.NewLine}{Environment.NewLine}", new string [] { "", "", "" } },
 			new object[] { $"First Line 界{Environment.NewLine}Second Line 界{Environment.NewLine}Third Line 界", new string [] { "First Line 界", "Second Line 界", "Third Line 界" } },
 			new object[] { $"First Line 界{Environment.NewLine}Second Line 界{Environment.NewLine}Third Line 界{Environment.NewLine}", new string [] { "First Line 界", "Second Line 界", "Third Line 界", "" } }
 		};
@@ -1420,13 +1424,13 @@ namespace Terminal.Gui.TextTests {
 		}
 
 		[Theory]
-		[InlineData("No crlf", "No crlf")]
+		[InlineData ("No crlf", "No crlf")]
 		// CRLF
-		[InlineData("\r\nThis has crlf in the beginning", "This has crlf in the beginning")]
-		[InlineData("This has crlf\r\nin the middle", "This has crlfin the middle")]
-		[InlineData("This has crlf in the end\r\n", "This has crlf in the end")]
+		[InlineData ("\r\nThis has crlf in the beginning", "This has crlf in the beginning")]
+		[InlineData ("This has crlf\r\nin the middle", "This has crlfin the middle")]
+		[InlineData ("This has crlf in the end\r\n", "This has crlf in the end")]
 		// LFCR
-		[InlineData("\n\rThis has lfcr in the beginning", "This has lfcr in the beginning")]
+		[InlineData ("\n\rThis has lfcr in the beginning", "This has lfcr in the beginning")]
 		[InlineData ("This has lfcr\n\rin the middle", "This has lfcrin the middle")]
 		[InlineData ("This has lfcr in the end\n\r", "This has lfcr in the end")]
 		// CR
@@ -1437,10 +1441,10 @@ namespace Terminal.Gui.TextTests {
 		[InlineData ("\nThis has lf in the beginning", "This has lf in the beginning")]
 		[InlineData ("This has lf\nin the middle", "This has lfin the middle")]
 		[InlineData ("This has lf in the end\n", "This has lf in the end")]
-		public void StripCRLF_RemovesCrLf(string input, string expectedOutput)
+		public void StripCRLF_RemovesCrLf (string input, string expectedOutput)
 		{
 			string actualOutput = TextFormatter.StripCRLF(input, keepNewLine: false);
-			Assert.Equal(expectedOutput, actualOutput);
+			Assert.Equal (expectedOutput, actualOutput);
 		}
 
 		[Theory]
@@ -1485,7 +1489,7 @@ namespace Terminal.Gui.TextTests {
 		[InlineData ("\nThis has lf in the beginning", " This has lf in the beginning")]
 		[InlineData ("This has lf\nin the middle", "This has lf in the middle")]
 		[InlineData ("This has lf in the end\n", "This has lf in the end ")]
-		public void ReplaceCRLFWithSpace_ReplacesCrLfWithSpace(string input, string expectedOutput)
+		public void ReplaceCRLFWithSpace_ReplacesCrLfWithSpace (string input, string expectedOutput)
 		{
 			string actualOutput = TextFormatter.ReplaceCRLFWithSpace(input);
 			Assert.Equal (expectedOutput, actualOutput);
