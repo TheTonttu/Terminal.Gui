@@ -233,40 +233,45 @@ namespace Terminal.Gui {
 		/// <returns>A list of text without the newline characters.</returns>
 		public static List<string> SplitNewLine (string text)
 		{
-			var runes = text.ToRuneList ();
-			var lines = new List<string> ();
-			var start = 0;
-			var end = 0;
+			if (string.IsNullOrEmpty (text)) {
+				return new () { string.Empty };
+			}
 
-			for (int i = 0; i < runes.Count; i++) {
-				end = i;
-				switch (runes [i].Value) {
-				case '\n':
-					lines.Add (StringExtensions.ToString (runes.GetRange (start, end - start)));
-					i++;
-					start = i;
-					break;
+			var lines = new List<string>();
 
-				case '\r':
-					if ((i + 1) < runes.Count && runes [i + 1].Value == '\n') {
-						lines.Add (StringExtensions.ToString (runes.GetRange (start, end - start)));
-						i += 2;
-						start = i;
-					} else {
-						lines.Add (StringExtensions.ToString (runes.GetRange (start, end - start)));
-						i++;
-						start = i;
-					}
+			const string newlineChars = "\r\n";
+			var remaining = text.AsSpan();
+			while (remaining.Length > 0) {
+				int newlineCharIndex = remaining.IndexOfAny (newlineChars);
+				if (newlineCharIndex == -1) {
 					break;
 				}
+
+				var line = remaining[..newlineCharIndex].ToString();
+				lines.Add (line);
+
+				int stride = line.Length;
+				char newlineChar = remaining [newlineCharIndex];
+				if (newlineChar == '\n') {
+					stride++;
+				} else /* 'r' */ {
+					int nextCharIndex = newlineCharIndex + 1;
+					bool crlf = nextCharIndex < remaining.Length && remaining[nextCharIndex] == '\n';
+					stride += crlf ? 2 : 1;
+				}
+				remaining = remaining [stride..];
+
+				// Ended with line break so there should be an empty line.
+				if (remaining.Length == 0) {
+					lines.Add (string.Empty);
+				}
 			}
-			if (runes.Count > 0 && lines.Count == 0) {
-				lines.Add (StringExtensions.ToString (runes));
-			} else if (runes.Count > 0 && start < runes.Count) {
-				lines.Add (StringExtensions.ToString (runes.GetRange (start, runes.Count - start)));
-			} else {
-				lines.Add ("");
+
+			if (remaining.Length > 0) {
+				string remainingLine = remaining.ToString();
+				lines.Add (remainingLine);
 			}
+
 			return lines;
 		}
 
