@@ -809,11 +809,29 @@ public class RuneTests {
 	}
 
 	[Fact]
-	public void Cast_To_Char_Durrogate_Pair_Return_UTF16 ()
+	public void Cast_To_Char_Surrogate_Pair_Return_UTF16 ()
 	{
 		Assert.NotEqual ("𝔹", $"{new Rune (unchecked((char)0x1d539))}");
 		Assert.Equal ("픹", $"{new Rune (unchecked((char)0x1d539))}");
 		Assert.Equal ("픹", $"{new Rune (0xd539)}");
 		Assert.Equal ("𝔹", $"{new Rune (0x1d539)}");
+	}
+
+	[Theory]
+	// Last byte is removed from length if the byte is 0.
+	[InlineData("a", "utf-8", 1)]
+	[InlineData("a", "utf-16", 1)]
+	[InlineData("a", "utf-32",3)]
+	[InlineData("𝔹", "utf-8", 4)]
+	[InlineData("𝔹", "utf-16", 4)]
+	[InlineData("𝔹", "utf-32", 3)]
+	public void GetEncodingLength_ReturnsLengthBasedOnSelectedEncoding (string runeStr, string encodingName, int expectedLength)
+	{
+		Rune rune = runeStr.EnumerateRunes ().Single ();
+		var encoding = Encoding.GetEncoding (encodingName);
+
+		int actualLength = rune.GetEncodingLength (encoding);
+
+		Assert.Equal (expectedLength, actualLength);
 	}
 }

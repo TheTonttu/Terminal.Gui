@@ -70,12 +70,23 @@ public static class RuneExtensions {
 	public static int GetEncodingLength (this Rune rune, Encoding encoding = null)
 	{
 		encoding ??= Encoding.UTF8;
-		var bytes = encoding.GetBytes (rune.ToString ().ToCharArray ());
-		var offset = 0;
-		if (bytes [^1] == 0) {
+
+		// Get characters with UTF16 to keep that part independent of selected encoding.
+		Span<char> charBuffer = stackalloc char[2];
+		int charsWritten = rune.EncodeToUtf16(charBuffer);
+		Span<char> chars = charBuffer[..charsWritten];
+
+		int maxEncodedLength = encoding.GetMaxByteCount (charsWritten);
+		Span<byte> byteBuffer = stackalloc byte[maxEncodedLength];
+		int bytesEncoded = encoding.GetBytes (chars, byteBuffer);
+		Span<byte> encodedBytes = byteBuffer[..bytesEncoded];
+
+		int offset = 0;
+		if (encodedBytes [^1] == 0) {
 			offset++;
 		}
-		return bytes.Length - offset;
+
+		return encodedBytes.Length - offset;
 	}
 
 	/// <summary>
