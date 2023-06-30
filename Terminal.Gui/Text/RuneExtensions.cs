@@ -131,10 +131,18 @@ public static class RuneExtensions {
 	/// <returns><see langword="true"/> if the rune is a valid surrogate pair; <see langword="false"/> otherwise.</returns>
 	public static bool DecodeSurrogatePair (this Rune rune, out char [] chars)
 	{
-		if (rune.IsSurrogatePair ()) {
-			chars = rune.ToString ().ToCharArray ();
+		if (rune.IsBmp) {
+			chars = null;
+			return false;
+		}
+
+		Span<char> charBuffer = stackalloc char[2];
+		int charsWritten = rune.EncodeToUtf16 (charBuffer);
+		if (charsWritten >= 2 && char.IsSurrogatePair (charBuffer [0], charBuffer [1])) {
+			chars = charBuffer [..charsWritten].ToArray ();
 			return true;
 		}
+
 		chars = null;
 		return false;
 	}
@@ -166,7 +174,13 @@ public static class RuneExtensions {
 	/// <returns><see langword="true"/> if the rune is a surrogate code point; <see langword="false"/> otherwise.</returns>
 	public static bool IsSurrogatePair (this Rune rune)
 	{
-		return char.IsSurrogatePair (rune.ToString (), 0);
+		if (rune.IsBmp) {
+			return false;
+		}
+
+		Span<char> charBuffer = stackalloc char[2];
+		int charsWritten = rune.EncodeToUtf16 (charBuffer);
+		return charsWritten >= 2 && char.IsSurrogatePair (charBuffer [0], charBuffer [1]);
 	}
 
 	/// <summary>
