@@ -778,7 +778,34 @@ namespace Terminal.Gui {
 		/// <param name="text">The text.</param>
 		/// <param name="columns">The width.</param>
 		/// <returns>The index of the text that fit the width.</returns>
-		public static int GetLengthThatFits (string text, int columns) => GetLengthThatFits (text?.ToRuneList (), columns);
+		public static int GetLengthThatFits (string text, int columns)
+		{
+			if (string.IsNullOrEmpty(text)) {
+				return 0;
+			}
+			return GetLengthThatFits (text.EnumerateRunes (), columns);
+		}
+
+		/// <summary>
+		/// Gets the number of the Runes in an enumerator of Runes that will fit in <paramref name="columns"/>.
+		/// </summary>
+		/// <param name="runes">The enumerator of runes.</param>
+		/// <param name="columns">The width.</param>
+		/// <returns>The index of the last Rune in <paramref name="runes"/> that fit in <paramref name="columns"/>.</returns>
+		private static int GetLengthThatFits (StringRuneEnumerator runes, int columns)
+		{
+			int runesLength = 0;
+			int runeIdx = 0;
+			foreach (var rune in runes) {
+				int runeWidth = Math.Max (rune.GetColumns (), 1);
+				if (runesLength + runeWidth > columns) {
+					break;
+				}
+				runesLength += runeWidth;
+				runeIdx++;
+			}
+			return runeIdx;
+		}
 
 		/// <summary>
 		/// Gets the number of the Runes in a list of Runes that will fit in <paramref name="columns"/>.
