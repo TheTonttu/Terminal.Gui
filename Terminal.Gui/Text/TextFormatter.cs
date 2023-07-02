@@ -288,17 +288,27 @@ namespace Terminal.Gui {
 			if (string.IsNullOrEmpty (text))
 				return text;
 
-			// if value is not wide enough
-			if (text.EnumerateRunes ().Sum (c => c.GetColumns ()) < width) {
+			// TODO: Reuse StringBuilder
+			// Preallocate capacity as the content either clips or gets padded to that length.
+			var stringBuilder = new StringBuilder (width);
 
-				// pad it out with spaces to the given alignment
-				int toPad = width - (text.EnumerateRunes ().Sum (c => c.GetColumns ()));
+			Span<char> buffer = stackalloc char[2];
+			int remainingSpace = width;
+			foreach (var rune in text.EnumerateRunes()) {
+				int runeWidth = rune.GetColumns();
+				if (remainingSpace < runeWidth) {
+					break;
+				}
 
-				return text + new string (' ', toPad);
+				int charsWritten = rune.EncodeToUtf16 (buffer);
+				stringBuilder.Append (buffer [..charsWritten]);
+				remainingSpace -= runeWidth;
 			}
 
-			// value is too wide
-			return new string (text.TakeWhile (c => (width -= ((Rune)c).GetColumns ()) >= 0).ToArray ());
+			// Pad any remaining space.
+			stringBuilder.Append (' ', remainingSpace);
+
+			return stringBuilder.ToString ();
 		}
 
 		/// <summary>
@@ -780,7 +790,7 @@ namespace Terminal.Gui {
 		/// <returns>The index of the text that fit the width.</returns>
 		public static int GetLengthThatFits (string text, int columns)
 		{
-			if (string.IsNullOrEmpty(text)) {
+			if (string.IsNullOrEmpty (text)) {
 				return 0;
 			}
 			return GetLengthThatFits (text.EnumerateRunes (), columns);
