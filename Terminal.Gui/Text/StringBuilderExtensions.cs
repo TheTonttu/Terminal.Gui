@@ -3,8 +3,8 @@ using System.Text;
 
 namespace Terminal.Gui {
 	/// <summary>
-	/// Various StringBuilder extension methods.
-	/// </summary>
+	/// Extensions to <see cref="StringBuilder"/> to support TUI text manipulation.
+	/// </summary>>
 	public static class StringBuilderExtensions {
 
 		const int MaxRuneChars = 2;

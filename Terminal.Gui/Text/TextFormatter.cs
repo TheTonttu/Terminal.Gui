@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -294,7 +295,7 @@ namespace Terminal.Gui {
 
 			Span<char> buffer = stackalloc char[2];
 			int remainingSpace = width;
-			foreach (var rune in text.EnumerateRunes()) {
+			foreach (var rune in text.EnumerateRunes ()) {
 				int runeWidth = rune.GetColumns();
 				if (remainingSpace < runeWidth) {
 					break;
@@ -566,6 +567,8 @@ namespace Terminal.Gui {
 		/// <returns>The justified text.</returns>
 		public static string Justify (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
+			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~4 kiB.
+
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
 			}
@@ -573,34 +576,99 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			var words = text.Split (' ');
-			int textCount;
-			if (IsHorizontalDirection (textDirection)) {
-				textCount = words.Sum (arg => arg.GetColumns ());
-			} else {
-				textCount = words.Sum (arg => arg.GetRuneCount ());
-			}
-			var spaces = words.Length > 1 ? (width - textCount) / (words.Length - 1) : 0;
-			var extras = words.Length > 1 ? (width - textCount) % (words.Length - 1) : 0;
+			Range[] rentedWordBuffer = null;
+			try {
+				int firstSpaceIndex = text.IndexOf (' ');
+				if (firstSpaceIndex == -1) {
+					// Text has no spaces so nothing to justify because spaces will not be added to the end.
+					return text;
+				}
 
-			var s = new System.Text.StringBuilder ();
-			for (int w = 0; w < words.Length; w++) {
-				var x = words [w];
-				s.Append (x);
-				if (w + 1 < words.Length)
-					for (int i = 0; i < spaces; i++)
-						s.Append (spaceChar);
-				if (extras > 0) {
-					for (int i = 0; i < 1; i++)
-						s.Append (spaceChar);
-					extras--;
+				// Use 1/2 of text length as potential word count for deciding between stackalloc and rent.
+				// Potentially the whole text could be spaces so we don't want to abuse the stack too much.
+				Span<Range> wordSearchBuffer = (text.Length * 0.50) <= WordSearchBufferStackallocLimit
+					? stackalloc Range [WordSearchBufferStackallocLimit]
+					: (rentedWordBuffer = ArrayPool<Range>.Shared.Rent(text.Length));
+
+				int searchIdx = firstSpaceIndex + 1;
+
+				int freeBufferIndex = 0;
+				wordSearchBuffer [freeBufferIndex] = (0..firstSpaceIndex);
+				freeBufferIndex++;
+
+				while (searchIdx < text.Length) {
+					int spaceIndex = text.IndexOf (' ', searchIdx);
+					if (spaceIndex == -1) {
+						break;
+					}
+
+					int startIndex = searchIdx;
+					int wordLength = (spaceIndex - searchIdx);
+					int endIndex = searchIdx + wordLength;
+					wordSearchBuffer [freeBufferIndex] = (startIndex..endIndex);
+					freeBufferIndex++;
+
+					searchIdx = spaceIndex + 1;
 				}
-				if (w + 1 == words.Length - 1) {
-					for (int i = 0; i < extras; i++)
-						s.Append (spaceChar);
+
+				if (searchIdx < text.Length) {
+					int lastWordLength = text.Length - searchIdx;
+					wordSearchBuffer [freeBufferIndex] = (searchIdx..(searchIdx + lastWordLength));
+					freeBufferIndex++;
+				}
+
+				int wordCount = freeBufferIndex;
+				var words = wordSearchBuffer[..wordCount];
+
+				// Calculate text count based on found words.
+				int textCount = 0;
+				var textChars = text.AsSpan();
+				if (IsHorizontalDirection (textDirection)) {
+					for (int i = 0; i < words.Length; i++) {
+						var word = textChars[words [i]];
+						textCount += word.GetColumns ();
+					}
+				} else {
+					for (int i = 0; i < words.Length; i++) {
+						var word = textChars[words [i]];
+						textCount += word.GetRuneCount ();
+					}
+				}
+
+				// TODO: Could optimize by returning original text if spaces + extras is <= 0 but that would break original behavior.
+				int spaces = words.Length > 1 ? (width - textCount) / (words.Length - 1) : 0;
+				int extras = words.Length > 1 ? (width - textCount) % (words.Length - 1) : 0;
+				// Clamp minimums to 0
+				spaces = Math.Max (spaces, 0);
+				extras = Math.Max (extras, 0);
+
+				// TODO: Precalculate StringBuilder capacity
+				var s = new StringBuilder();
+				for (int w = 0; w < words.Length; w++) {
+					var word = textChars[words [w]];
+					s.Append (word);
+
+					int nextWordIdx = w + 1;
+					if (nextWordIdx < words.Length) {
+						s.Append (spaceChar, spaces);
+					}
+					if (extras > 0) {
+						// Dump all remaining extras if this is the second to last word.
+						if (nextWordIdx == words.Length - 1) {
+							s.Append (spaceChar, extras);
+							extras = 0;
+						} else {
+							s.Append (spaceChar);
+							extras--;
+						}
+					}
+				}
+				return s.ToString ();
+			} finally {
+				if (rentedWordBuffer != null) {
+					ArrayPool<Range>.Shared.Return (rentedWordBuffer, clearArray: false);
 				}
 			}
-			return s.ToString ();
 		}
 
 		static char [] whitespace = new char [] { ' ', '\t' };
@@ -734,7 +802,7 @@ namespace Terminal.Gui {
 		}
 
 		/// <summary>
-		/// Returns the width of the widest line in the text, accounting for wide-glyphs (uses <see cref="StringExtensions.GetColumns"/>).
+		/// Returns the width of the widest line in the text, accounting for wide-glyphs (uses <see cref="StringExtensions.GetColumns(string)"/>).
 		/// <paramref name="text"/> if it contains newlines.
 		/// </summary>
 		/// <param name="text">Text, may contain newlines.</param>
