@@ -789,16 +789,18 @@ namespace Terminal.Gui {
 		/// <param name="maxColumns">The number of columns to constrain the text to for formatting.</param>
 		public static int MaxWidth (string text, int maxColumns)
 		{
-			var result = TextFormatter.Format (text: text, width: maxColumns, justify: false, wordWrap: true);
-			var max = 0;
-			result.ForEach (s => {
-				var m = 0;
-				s.ToRuneList ().ForEach (r => m += Math.Max (r.GetColumns (), 1));
-				if (m > max) {
-					max = m;
+			var lines = TextFormatter.Format (text: text, width: maxColumns, justify: false, wordWrap: true);
+			int maxWidth = 0;
+			foreach (string line in lines) {
+				int lineWidth = 0;
+				foreach (var rune in line.EnumerateRunes ()) {
+					lineWidth += Math.Max (rune.GetColumns (), 1);
 				}
-			});
-			return max;
+				if (lineWidth > maxWidth) {
+					maxWidth = lineWidth;
+				}
+			}
+			return maxWidth;
 		}
 
 		/// <summary>
