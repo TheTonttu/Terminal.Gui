@@ -1494,5 +1494,34 @@ namespace Terminal.Gui.TextTests {
 			string actualOutput = TextFormatter.ReplaceCRLFWithSpace(input);
 			Assert.Equal (expectedOutput, actualOutput);
 		}
+
+		[Theory]
+		[InlineData (null, int.MaxValue, 0)]
+		[InlineData ("", int.MaxValue, 0)]
+		[InlineData ("0", 0, 0)]
+		[InlineData ("0", 1, 1)]
+		[InlineData ("0", 2, 1)]
+		[InlineData ("0123456789", 5, 5)]
+		[InlineData ("0123456789", 11, 10)]
+		[InlineData ("Hello World!", int.MaxValue, 12)]
+		[InlineData ("Hello World!", 8, 6)]
+		[InlineData ("Hello World!", 4, 4)]
+		[InlineData ("Ĺόŕéḿ íṕśúḿ d́όĺόŕ śít́ áḿét́, ćόńśéćt́ét́úŕ ád́íṕíśćíńǵ éĺít́. Ṕh́áśéĺĺúś v́éĺ ĺéćt́úś íd́ áńt́é ḿόĺéśt́íé t́ŕíśt́íq́úé út́ á j́úśt́ό.", int.MaxValue, 135)]
+		[InlineData ("Ĺόŕéḿ íṕśúḿ d́όĺόŕ śít́ áḿét́, ćόńśéćt́ét́úŕ ád́íṕíśćíńǵ éĺít́. Ṕh́áśéĺĺúś v́éĺ ĺéćt́úś íd́ áńt́é ḿόĺéśt́íé t́ŕíśt́íq́úé út́ á j́úśt́ό.", 70, 63)]
+		[InlineData (
+			"""
+			Ĺόŕéḿ íṕśúḿ d́όĺόŕ śít́ áḿét́, ćόńśéćt́ét́úŕ ád́íṕíśćíńǵ éĺít́.
+			Ṕh́áśéĺĺúś v́éĺ ĺéćt́úś íd́ áńt́é ḿόĺéśt́íé t́ŕíśt́íq́úé út́ á j́úśt́ό.
+			""", int.MaxValue, 71)]
+		[InlineData (
+			"""
+			Ĺόŕéḿ íṕśúḿ d́όĺόŕ śít́ áḿét́, ćόńśéćt́ét́úŕ ád́íṕíśćíńǵ éĺít́.
+			Ṕh́áśéĺĺúś v́éĺ ĺéćt́úś íd́ áńt́é ḿόĺéśt́íé t́ŕíśt́íq́úé út́ á j́úśt́ό.
+			""", 70, 63)]
+		public void MaxWidth_ReturnsMaxWidthConstrainedToMaxColumns (string input, int maxColumns, int expectedWidth)
+		{
+			int actualWidth = TextFormatter.MaxWidth (input, maxColumns);
+			Assert.Equal (expectedWidth, actualWidth);
+		}
 	}
 }
