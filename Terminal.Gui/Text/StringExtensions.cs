@@ -50,7 +50,28 @@ public static class StringExtensions {
 	/// <returns></returns>
 	public static int GetColumns (this string str)
 	{
-		return str == null ? 0 : str.EnumerateRunes ().Sum (r => Math.Max (r.GetColumns (), 0));
+		if (str == null) {
+			return 0;
+		}
+
+		return str.EnumerateRunes ().GetColumns ();
+	}
+
+	/// <summary>
+	/// Gets the number of columns the string runes occupy in the terminal.
+	/// </summary>
+	/// <remarks>
+	/// This is a Terminal.Gui extension method to <see cref="StringRuneEnumerator"/> to support TUI text manipulation.
+	/// </remarks>
+	/// <param name="runes">The runes to measure.</param>
+	/// <returns></returns>
+	public static int GetColumns (this StringRuneEnumerator runes)
+	{
+		int sum = 0;
+		foreach (var rune in runes) {
+			sum += Math.Max (rune.GetColumns (), 0);
+		}
+		return sum;
 	}
 
 	/// <summary>
