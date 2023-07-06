@@ -531,6 +531,8 @@ namespace Terminal.Gui {
 		/// <returns>Justified and clipped text.</returns>
 		public static string ClipAndJustify (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
+			const int MaxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
+
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
 			}
@@ -538,21 +540,58 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			var runes = text.ToRuneList ();
-			int slen = runes.Count;
-			if (slen > width) {
+			int maxTextWidth = IsHorizontalDirection(textDirection)
+				? text.Length * 2
+				: text.Length;
+			if (maxTextWidth <= width) {
+				// Early exit when the worst case fits the width.
+				return justify
+					? Justify (text, width, ' ', textDirection)
+					: text;
+			}
+
+			int maxRuneCount = text.Length;
+			Rune[] rentedRuneArray = null;
+			Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
+				? stackalloc Rune[maxRuneCount]
+				: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
+			try {
+				int freeBufferIdx = 0;
 				if (IsHorizontalDirection (textDirection)) {
-					return StringExtensions.ToString (runes.GetRange (0, GetLengthThatFits (text, width)));
+					int maxColumns = width;
+					int sumColumns = 0;
+					foreach (var rune in text.EnumerateRunes ()) {
+						int runeColumns = Math.Max(rune.GetColumns(), 1);
+						if (sumColumns + runeColumns > maxColumns) {
+							int finalLength = freeBufferIdx;
+							return StringExtensions.ToString (runeBuffer [..finalLength]);
+						}
+						runeBuffer [freeBufferIdx] = rune;
+						freeBufferIdx++;
+						sumColumns += runeColumns;
+					}
+
+					if (sumColumns < maxColumns && justify) {
+						return Justify (text, maxColumns, ' ', textDirection);
+					}
 				} else {
-					return StringExtensions.ToString (runes.GetRange (0, width));
-				}
-			} else {
-				if (justify) {
-					return Justify (text, width, ' ', textDirection);
-				} else if (IsHorizontalDirection (textDirection) && text.GetColumns () > width) {
-					return StringExtensions.ToString (runes.GetRange (0, GetLengthThatFits (text, width)));
+					int maxLength = width;
+					int sumLength = 0;
+					foreach (var rune in text.EnumerateRunes ()) {
+						if (sumLength + 1 > maxLength) {
+							int finalLength = freeBufferIdx;
+							return StringExtensions.ToString (runeBuffer [..finalLength]);
+						}
+						runeBuffer [freeBufferIdx] = rune;
+						freeBufferIdx++;
+						sumLength++;
+					}
 				}
 				return text;
+			} finally {
+				if (rentedRuneArray != null) {
+					ArrayPool<Rune>.Shared.Return (rentedRuneArray);
+				}
 			}
 		}
 
@@ -567,7 +606,7 @@ namespace Terminal.Gui {
 		/// <returns>The justified text.</returns>
 		public static string Justify (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
-			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~4 kiB.
+			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~2 kiB.
 
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
