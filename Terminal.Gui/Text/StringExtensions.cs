@@ -177,6 +177,26 @@ public static class StringExtensions {
 	}
 
 	/// <summary>
+	/// Converts read-only span of runes into a string.
+	/// </summary>
+	/// <param name="runes">The runes to convert.</param>
+	/// <returns></returns>
+	public static string ToString (in ReadOnlySpan<Rune> runes)
+	{
+		lock (CachedStringBuilder) {
+			const int maxUtf16CharsPerRune = 2;
+			Span<char> chars = stackalloc char[maxUtf16CharsPerRune];
+			foreach (var rune in runes) {
+				int charsWritten = rune.EncodeToUtf16 (chars);
+				CachedStringBuilder.Append (chars [..charsWritten]);
+			}
+			string str = CachedStringBuilder.ToString();
+			CachedStringBuilder.Clear ();
+			return str;
+		}
+	}
+
+	/// <summary>
 	/// Converts a byte generic collection into a string in the provided encoding (default is UTF8)
 	/// </summary>
 	/// <param name="bytes">The enumerable byte to convert.</param>
@@ -191,7 +211,7 @@ public static class StringExtensions {
 	}
 
 	/// <summary>
-	/// Converts bytes in read-only span into a string in the provided encoding (default is UTF8).
+	/// Converts read-only span of bytes into a string in the provided encoding (default is UTF8).
 	/// </summary>
 	/// <param name="bytes">The enumerable byte to convert.</param>
 	/// <param name="encoding">The encoding to be used.</param>
