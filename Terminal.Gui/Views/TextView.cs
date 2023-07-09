@@ -160,7 +160,7 @@ namespace Terminal.Gui {
 
 		void Append (List<byte> line)
 		{
-			var str = StringExtensions.ToString (line.ToArray ());
+			var str = StringExtensions.ToString (CollectionsMarshal.AsSpan(line));
 			_lines.Add (StringToRuneCells (str));
 		}
 
