@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using System.Buffers;
 using System.Text;
 
 namespace Benchmarks.StringExtensions {
@@ -12,7 +13,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public string StringConcat (IEnumerable<Rune> runes)
+		public string StringConcat (IEnumerable<Rune> runes, int size)
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
@@ -34,7 +35,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string EncodeCharsStringBuilder (IEnumerable<Rune> runes)
+		public string EncodeCharsStringBuilder (IEnumerable<Rune> runes, int size)
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
@@ -57,7 +58,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string EncodeCharsCachedStringBuilder (IEnumerable<Rune> runes)
+		public string EncodeCharsCachedStringBuilder (IEnumerable<Rune> runes, int size)
 		{
 			string str = string.Empty;
 			for (int i = 0; i < Repetitions; i++) {
@@ -81,8 +82,107 @@ namespace Benchmarks.StringExtensions {
 			}
 		}
 
+		[Benchmark]
+		[ArgumentsSource (nameof (DataSource))]
+		public string RuneSpanStringBuilderAppend (Rune [] runes, int size)
+		{
+			string str = string.Empty;
+			for (int i = 0; i < Repetitions; i++) {
+				str = RuneSpanStringBuilderAppendImplementation (runes);
+			}
+			return str;
+		}
 
-		public IEnumerable<object> DataSource ()
+		private static string RuneSpanStringBuilderAppendImplementation (in ReadOnlySpan<Rune> runes)
+		{
+			lock (CachedStringBuilder) {
+				const int maxUtf16CharsPerRune = 2;
+				Span<char> chars = stackalloc char[maxUtf16CharsPerRune];
+				foreach (var rune in runes) {
+					int charsWritten = rune.EncodeToUtf16 (chars);
+					CachedStringBuilder.Append (chars [..charsWritten]);
+				}
+				string str = CachedStringBuilder.ToString();
+				CachedStringBuilder.Clear ();
+				return str;
+			}
+		}
+
+		[Benchmark]
+		[ArgumentsSource (nameof (DataSource))]
+		public string RuneSpanArrayBuffer (Rune [] runes, int size)
+		{
+			string str = string.Empty;
+			for (int i = 0; i < Repetitions; i++) {
+				str = RuneSpanArrayBufferImplementation (runes);
+			}
+			return str;
+		}
+
+		private static string RuneSpanArrayBufferImplementation (in ReadOnlySpan<Rune> runes)
+		{
+			const int MaxUtf16CharsPerRune = 2;
+			const int MaxStackallocBufferSize = 512; // ~1 kiB
+
+			char[]? rentedArray = null;
+			try {
+				int bufferSize = runes.Length * MaxUtf16CharsPerRune;
+				Span<char> buffer = bufferSize <= MaxStackallocBufferSize
+				? stackalloc char[MaxStackallocBufferSize]
+				: (rentedArray = ArrayPool<char>.Shared.Rent(bufferSize));
+
+				var remainingBuffer = buffer;
+				foreach (var rune in runes) {
+					int charsWritten = rune.EncodeToUtf16 (remainingBuffer);
+					remainingBuffer = remainingBuffer [charsWritten..];
+				}
+
+				return new string (buffer [..^remainingBuffer.Length]);
+			} finally {
+				if (rentedArray != null) {
+					ArrayPool<char>.Shared.Return (rentedArray);
+				}
+			}
+		}
+
+		[Benchmark]
+		[ArgumentsSource (nameof (DataSource))]
+		public string RuneSpanArrayBufferExactStackallocSize (Rune [] runes, int size)
+		{
+			string str = string.Empty;
+			for (int i = 0; i < Repetitions; i++) {
+				str = RuneSpanArrayBufferExactStackallocSizeImplementation (runes);
+			}
+			return str;
+		}
+
+		private static string RuneSpanArrayBufferExactStackallocSizeImplementation (in ReadOnlySpan<Rune> runes)
+		{
+			const int MaxUtf16CharsPerRune = 2;
+			const int MaxStackallocBufferSize = 512; // ~1 kiB
+
+			char[]? rentedArray = null;
+			try {
+				int bufferSize = runes.Length * MaxUtf16CharsPerRune;
+				Span<char> buffer = bufferSize <= MaxStackallocBufferSize
+				? stackalloc char[bufferSize]
+				: (rentedArray = ArrayPool<char>.Shared.Rent(bufferSize));
+
+				var remainingBuffer = buffer;
+				foreach (var rune in runes) {
+					int charsWritten = rune.EncodeToUtf16 (remainingBuffer);
+					remainingBuffer = remainingBuffer [charsWritten..];
+				}
+
+				return new string (buffer [..^remainingBuffer.Length]);
+			} finally {
+				if (rentedArray != null) {
+					ArrayPool<char>.Shared.Return (rentedArray);
+				}
+			}
+		}
+
+		public IEnumerable<object []> DataSource ()
 		{
 			string textSource =
 				"""
@@ -93,10 +193,14 @@ namespace Benchmarks.StringExtensions {
 				Śúśṕéńd́íśśé śít́ áḿét́ áŕćú út́ áŕćú f́áúćíb́úś v́áŕíúś. V́ív́áḿúś śít́ áḿét́ ḿáx́íḿúś d́íáḿ. Ńáḿ éx́ ĺéό, ṕh́áŕét́ŕá éú ĺόb́όŕt́íś át́, t́ŕíśt́íq́úé út́ f́éĺíś.
 				""";
 
-			yield return textSource.EnumerateRunes ().Take(1).ToArray();
-			yield return textSource.EnumerateRunes().Take(10).ToArray ();
-			yield return textSource.EnumerateRunes ().Take (100).ToArray();
-			yield return textSource.EnumerateRunes ().ToArray();
+			// Extra parameter as workaround to single parameter grouping different length arrays to same baseline making comparison difficult.
+			int[] sizes = {
+				1, 10, 100, textSource.Length / 2, textSource.Length
+			};
+
+			foreach (int size in sizes) {
+				yield return new object [] { textSource.EnumerateRunes ().Take (size).ToArray (), size };
+			}
 		}
 	}
 }
