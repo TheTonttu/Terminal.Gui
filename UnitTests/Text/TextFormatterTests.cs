@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 
 // Alias Console to MockConsole so we don't accidentally use Console
 using Console = Terminal.Gui.FakeConsole;
+using System.Buffers;
 
 namespace Terminal.Gui.TextTests {
 	public class TextFormatterTests {
@@ -1450,6 +1451,32 @@ namespace Terminal.Gui.TextTests {
 		[Theory]
 		[InlineData ("No crlf", "No crlf")]
 		// CRLF
+		[InlineData ("\r\nThis has crlf in the beginning", "This has crlf in the beginning")]
+		[InlineData ("This has crlf\r\nin the middle", "This has crlfin the middle")]
+		[InlineData ("This has crlf in the end\r\n", "This has crlf in the end")]
+		// LFCR
+		[InlineData ("\n\rThis has lfcr in the beginning", "This has lfcr in the beginning")]
+		[InlineData ("This has lfcr\n\rin the middle", "This has lfcrin the middle")]
+		[InlineData ("This has lfcr in the end\n\r", "This has lfcr in the end")]
+		// CR
+		[InlineData ("\rThis has cr in the beginning", "This has cr in the beginning")]
+		[InlineData ("This has cr\rin the middle", "This has crin the middle")]
+		[InlineData ("This has cr in the end\r", "This has cr in the end")]
+		// LF
+		[InlineData ("\nThis has lf in the beginning", "This has lf in the beginning")]
+		[InlineData ("This has lf\nin the middle", "This has lfin the middle")]
+		[InlineData ("This has lf in the end\n", "This has lf in the end")]
+		public void StripCRLF_BufferVariant_RemovesCrLf (string input, string expectedOutput)
+		{
+			var buffer = new char[input.Length];
+			int charsWritten = TextFormatter.StripCRLF(input, buffer, keepNewLine: false);
+			var actualOutput = new string (buffer, 0, charsWritten);
+			Assert.Equal (expectedOutput, actualOutput);
+		}
+
+		[Theory]
+		[InlineData ("No crlf", "No crlf")]
+		// CRLF
 		[InlineData ("\r\nThis has crlf in the beginning", "\nThis has crlf in the beginning")]
 		[InlineData ("This has crlf\r\nin the middle", "This has crlf\nin the middle")]
 		[InlineData ("This has crlf in the end\r\n", "This has crlf in the end\n")]
@@ -1468,6 +1495,32 @@ namespace Terminal.Gui.TextTests {
 		public void StripCRLF_KeepNewLine_RemovesCarriageReturnFromCrLf (string input, string expectedOutput)
 		{
 			string actualOutput = TextFormatter.StripCRLF(input, keepNewLine: true);
+			Assert.Equal (expectedOutput, actualOutput);
+		}
+
+		[Theory]
+		[InlineData ("No crlf", "No crlf")]
+		// CRLF
+		[InlineData ("\r\nThis has crlf in the beginning", "\nThis has crlf in the beginning")]
+		[InlineData ("This has crlf\r\nin the middle", "This has crlf\nin the middle")]
+		[InlineData ("This has crlf in the end\r\n", "This has crlf in the end\n")]
+		// LFCR
+		[InlineData ("\n\rThis has lfcr in the beginning", "\n\rThis has lfcr in the beginning")]
+		[InlineData ("This has lfcr\n\rin the middle", "This has lfcr\n\rin the middle")]
+		[InlineData ("This has lfcr in the end\n\r", "This has lfcr in the end\n\r")]
+		// CR
+		[InlineData ("\rThis has cr in the beginning", "\rThis has cr in the beginning")]
+		[InlineData ("This has cr\rin the middle", "This has cr\rin the middle")]
+		[InlineData ("This has cr in the end\r", "This has cr in the end\r")]
+		// LF
+		[InlineData ("\nThis has lf in the beginning", "\nThis has lf in the beginning")]
+		[InlineData ("This has lf\nin the middle", "This has lf\nin the middle")]
+		[InlineData ("This has lf in the end\n", "This has lf in the end\n")]
+		public void StripCRLF_BufferVariant_KeepNewLine_RemovesCarriageReturnFromCrLf (string input, string expectedOutput)
+		{
+			var buffer = new char[input.Length];
+			int charsWritten = TextFormatter.StripCRLF(input, buffer, keepNewLine: true);
+			var actualOutput = new string (buffer, 0, charsWritten);
 			Assert.Equal (expectedOutput, actualOutput);
 		}
 
