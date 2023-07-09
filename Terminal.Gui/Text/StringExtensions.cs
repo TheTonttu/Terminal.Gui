@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,7 +35,6 @@ public static class StringExtensions {
 		if (string.IsNullOrEmpty (str) || n == 1) {
 			return str;
 		}
-
 		return new StringBuilder (str.Length * n)
 			.Insert (0, str, n)
 			.ToString ();
@@ -183,16 +183,27 @@ public static class StringExtensions {
 	/// <returns></returns>
 	public static string ToString (in ReadOnlySpan<Rune> runes)
 	{
-		lock (CachedStringBuilder) {
-			const int maxUtf16CharsPerRune = 2;
-			Span<char> chars = stackalloc char[maxUtf16CharsPerRune];
+		const int MaxUtf16CharsPerRune = 2;
+		const int MaxStackallocBufferSize = 512; // ~1 kiB
+
+		char[]? rentedArray = null;
+		try {
+			int bufferSize = runes.Length * MaxUtf16CharsPerRune;
+			Span<char> buffer = bufferSize <= MaxStackallocBufferSize
+				? stackalloc char[bufferSize]
+				: (rentedArray = ArrayPool<char>.Shared.Rent(bufferSize));
+
+			var remainingBuffer = buffer;
 			foreach (var rune in runes) {
-				int charsWritten = rune.EncodeToUtf16 (chars);
-				CachedStringBuilder.Append (chars [..charsWritten]);
+				int charsWritten = rune.EncodeToUtf16 (remainingBuffer);
+				remainingBuffer = remainingBuffer[charsWritten..];
 			}
-			string str = CachedStringBuilder.ToString();
-			CachedStringBuilder.Clear ();
-			return str;
+
+			return new string (buffer[..^remainingBuffer.Length]);
+		} finally {
+			if (rentedArray != null) {
+				ArrayPool<char>.Shared.Return (rentedArray);
+			}
 		}
 	}
 
