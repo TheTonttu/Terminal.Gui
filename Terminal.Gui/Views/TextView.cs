@@ -104,7 +104,7 @@ namespace Terminal.Gui {
 		internal static List<RuneCell> StringToRuneCells (string str, ColorScheme? colorScheme = null)
 		{
 			List<RuneCell> cells = new List<RuneCell> ();
-			foreach (var rune in str.ToRunes ()) {
+			foreach (var rune in str.EnumerateRunes ()) {
 				cells.Add (new RuneCell { Rune = rune, ColorScheme = colorScheme });
 			}
 			return cells;
@@ -3108,7 +3108,7 @@ namespace Terminal.Gui {
 			foreach (var cell in cells) {
 				offset += cell.Rune.Encode (encoded, offset);
 			}
-			return StringExtensions.ToString (encoded.AsSpan());
+			return StringExtensions.ToString (encoded.AsSpan ());
 		}
 
 		/// <summary>
