@@ -175,6 +175,78 @@ namespace Terminal.Gui {
 			return stringBuilder.ToString ();
 		}
 
+		/// <summary>
+		/// Span buffer variant of <see cref="StripCRLF(string, bool)"/>.
+		/// </summary>
+		/// <param name="str"></param>
+		/// <param name="buffer"></param>
+		/// <param name="keepNewLine"></param>
+		/// <returns>Number of chars written to the buffer.</returns>
+		internal static int StripCRLF (in ReadOnlySpan<char> str, in Span<char> buffer, bool keepNewLine = false)
+		{
+			const string newlineChars = "\r\n";
+
+			var remaining = str;
+			var remainingBuffer = buffer;
+			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
+			// Early exit if there are no newline characters.
+			if (firstNewlineCharIndex < 0) {
+				str.CopyTo (buffer);
+				return str.Length;
+			}
+
+			var firstSegment = remaining[..firstNewlineCharIndex];
+			firstSegment.CopyTo (remainingBuffer);
+			remainingBuffer = remainingBuffer [firstSegment.Length..];
+
+			// The first newline is not skipped at this point because the "keepNewLine" condition has not been evaluated.
+			// This means there will be 1 extra iteration because the same newline index is checked again in the loop.
+			remaining = remaining [firstNewlineCharIndex..];
+
+			while (remaining.Length > 0) {
+				int newlineCharIndex = remaining.IndexOfAny (newlineChars);
+				if (newlineCharIndex < 0) {
+					break;
+				}
+
+				var segment = remaining[..newlineCharIndex];
+				segment.CopyTo (remainingBuffer);
+				remainingBuffer = remainingBuffer [segment.Length..];
+
+				int stride = segment.Length;
+				// Evaluate how many newline characters to preserve.
+				char newlineChar = remaining [newlineCharIndex];
+				if (newlineChar == '\n') {
+					stride++;
+					if (keepNewLine) {
+						remainingBuffer [0] = '\n';
+						remainingBuffer = remainingBuffer [1..];
+					}
+				} else /* '\r' */ {
+					int nextCharIndex = newlineCharIndex + 1;
+					bool crlf = nextCharIndex < remaining.Length && remaining [nextCharIndex] == '\n';
+					if (crlf) {
+						stride += 2;
+						if (keepNewLine) {
+							remainingBuffer [0] = '\n';
+							remainingBuffer = remainingBuffer [1..];
+						}
+					} else {
+						stride++;
+						if (keepNewLine) {
+							remainingBuffer [0] = '\r';
+							remainingBuffer = remainingBuffer [1..];
+						}
+					}
+				}
+				remaining = remaining [stride..];
+			}
+			remaining.CopyTo (remainingBuffer);
+			remainingBuffer = remainingBuffer [remaining.Length..];
+
+			return buffer.Length - remainingBuffer.Length;
+		}
+
 		internal static string ReplaceCRLFWithSpace (string str)
 		{
 			const string newlineChars = "\r\n";
@@ -333,130 +405,130 @@ namespace Terminal.Gui {
 		/// If <paramref name="preserveTrailingSpaces"/> is <see langword="false"/> at most one space will be preserved at the end of the last line.
 		/// </para>
 		/// </remarks>
-		public static List<string> WordWrapText (string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
+		public static List<string> WordWrapText (
+			string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
+			const int MaxStackallocStripBufferSize = 512; // ~1 kiB
+			const int MaxStackallocRuneBufferSize = 256; // ~1 kiB
+
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
+			}
+
+			if (string.IsNullOrEmpty (text)) {
+				return new List<string> ();
+			}
+
+			int maxTextWidth = IsHorizontalDirection(textDirection)
+				? text.Length * 2
+				: text.Length;
+			if (maxTextWidth <= width) {
+				// Early exit when the simplest worst case length fits the single line.
+				if (preserveTrailingSpaces && !text.Contains ('\t')) {
+					return new () { text };
+				}
 			}
 
 			int start = 0, end;
 			var lines = new List<string> ();
 
-			if (string.IsNullOrEmpty (text)) {
-				return lines;
-			}
+			char[]? stripRentedArray = null;
+			Rune[]? runeRentedArray = null;
+			try {
+				Span<char> stripBuffer = text.Length <= MaxStackallocStripBufferSize
+					? stackalloc char[MaxStackallocStripBufferSize]
+					: (stripRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
-			var runes = StripCRLF (text).ToRuneList ();
-			if (preserveTrailingSpaces) {
-				while ((end = start) < runes.Count) {
-					end = GetNextWhiteSpace (start, width, out bool incomplete);
-					if (end == 0 && incomplete) {
-						start = text.GetRuneCount ();
-						break;
-					}
-					lines.Add (StringExtensions.ToString (runes.GetRange (start, end - start)));
-					start = end;
-					if (incomplete) {
-						start = text.GetRuneCount ();
-						break;
-					}
+				Span<Rune> runeBuffer = text.Length <= MaxStackallocRuneBufferSize
+					? stackalloc Rune[MaxStackallocRuneBufferSize]
+					: (runeRentedArray = ArrayPool<Rune>.Shared.Rent(text.Length));
+
+				int crlfStrippedCharsWritten = StripCRLF (text, stripBuffer);
+				var crlfStrippedChars = stripBuffer[..crlfStrippedCharsWritten];
+
+				int runeIdx = 0;
+				foreach (var rune in crlfStrippedChars.EnumerateRunes ()) {
+					runeBuffer [runeIdx] = rune;
+					runeIdx++;
 				}
-			} else {
-				if (IsHorizontalDirection (textDirection)) {
-					//if (GetLengthThatFits (runes.GetRange (start, runes.Count - start), width) > 0) {
-					//	// while there's still runes left and end is not past end...
-					//	while (start < runes.Count &&
-					//		(end = start + Math.Max (GetLengthThatFits (runes.GetRange (start, runes.Count - start), width) - 1, 0)) < runes.Count) {
-					//		// end now points to start + LengthThatFits
-					//		// Walk back over trailing spaces
-					//		while (runes [end] == ' ' && end > start) {
-					//			end--;
-					//		}
-					//		// end now points to start + LengthThatFits - any trailing spaces; start saving new line
-					//		var line = runes.GetRange (start, end - start + 1);
+				var runes = runeBuffer[..runeIdx];
 
-					//		if (end == start && width > 1) {
-					//			// it was all trailing spaces; now walk forward to next non-space
-					//			do {
-					//				start++;
-					//			} while (start < runes.Count && runes [start] == ' ');
-
-					//			// start now points to first non-space we haven't seen yet or we're done
-					//			if (start < runes.Count) {
-					//				// we're not done. we have remaining = width - line.Count columns left; 
-					//				var remaining = width - line.Count;
-					//				if (remaining > 1) {
-					//					// add a space for all the spaces we walked over 
-					//					line.Add (' ');
-					//				}
-					//				var count = GetLengthThatFits (runes.GetRange (start, runes.Count - start), width - line.Count);
-
-					//				// [start..count] now has rest of line
-					//				line.AddRange (runes.GetRange (start, count));
-					//				start += count;
-					//			}
-					//		} else {
-					//			start += line.Count;
-					//		}
-
-					//		//// if the previous line was just a ' ' and the new line is just a ' '
-					//		//// don't add new line
-					//		//if (line [0] == ' ' && (lines.Count > 0 && lines [lines.Count - 1] [0] == ' ')) {
-					//		//} else {
-					//		//}
-					//		lines.Add (string.Make (line));
-
-					//		// move forward to next non-space
-					//		while (width > 1 && start < runes.Count && runes [start] == ' ') {
-					//			start++;
-					//		}
-					//	}
-					//}
-
-					while ((end = start + Math.Max (GetLengthThatFits (runes.GetRange (start, runes.Count - start), width), 1)) < runes.Count) {
-						while (runes [end].Value != ' ' && end > start)
-							end--;
-						if (end == start)
-							end = start + GetLengthThatFits (runes.GetRange (end, runes.Count - end), width);
-						var str = StringExtensions.ToString (runes.GetRange (start, end - start));
-						if (end > start && str.GetColumns () <= width) {
-							lines.Add (str);
+				if (preserveTrailingSpaces) {
+					while ((end = start) < runes.Length) {
+						end = GetNextWhiteSpace (runes, start, width, out bool incomplete);
+						if (end == 0 && incomplete) {
+							start = text.GetRuneCount ();
+							break;
+						}
+						lines.Add (StringExtensions.ToString (runes [start..end]));
+						start = end;
+						if (incomplete) {
+							start = text.GetRuneCount ();
+							break;
+						}
+					}
+				} else {
+					if (IsHorizontalDirection (textDirection)) {
+						while ((end = start + Math.Max (GetLengthThatFits (runes [start..], width), 1)) < runes.Length) {
+							while (runes [end].Value != ' ' && end > start)
+								end--;
+							if (end == start)
+								end = start + GetLengthThatFits (runes [end..], width);
+							var str = StringExtensions.ToString (runes[start..end ]);
+							if (end > start && str.GetColumns () <= width) {
+								lines.Add (str);
+								start = end;
+								if (runes [end].Value == ' ') {
+									start++;
+								}
+							} else {
+								end++;
+								start = end;
+							}
+						}
+					} else {
+						while ((end = start + width) < runes.Length) {
+							while (runes [end].Value != ' ' && end > start) {
+								end--;
+							}
+							if (end == start) {
+								end = start + width;
+							}
+							lines.Add (StringExtensions.ToString (runes [start..end]));
 							start = end;
 							if (runes [end].Value == ' ') {
 								start++;
 							}
-						} else {
-							end++;
-							start = end;
-						}
-					}
-
-				} else {
-					while ((end = start + width) < runes.Count) {
-						while (runes [end].Value != ' ' && end > start) {
-							end--;
-						}
-						if (end == start) {
-							end = start + width;
-						}
-						lines.Add (StringExtensions.ToString (runes.GetRange (start, end - start)));
-						start = end;
-						if (runes [end].Value == ' ') {
-							start++;
 						}
 					}
 				}
+
+				if (start < text.GetRuneCount ()) {
+					var str = StringExtensions.ToString (runes[start..]);
+					if (IsVerticalDirection (textDirection) || preserveTrailingSpaces || (!preserveTrailingSpaces && str.GetColumns () <= width)) {
+						lines.Add (str);
+					}
+				}
+
+				return lines;
+			} finally {
+				if (stripRentedArray != null) {
+					ArrayPool<char>.Shared.Return (stripRentedArray);
+				}
+				if (runeRentedArray != null) {
+					ArrayPool<Rune>.Shared.Return (runeRentedArray);
+				}
 			}
 
-			int GetNextWhiteSpace (int from, int cWidth, out bool incomplete, int cLength = 0)
+			int GetNextWhiteSpace (in ReadOnlySpan<Rune> runes, int from, int cWidth, out bool incomplete, int cLength = 0)
 			{
 				var lastFrom = from;
 				var to = from;
 				var length = cLength;
 				incomplete = false;
 
-				while (length < cWidth && to < runes.Count) {
+				while (length < cWidth && to < runes.Length) {
 					var rune = runes [to];
 					if (IsHorizontalDirection (textDirection)) {
 						length += rune.GetColumns ();
@@ -464,7 +536,7 @@ namespace Terminal.Gui {
 						length++;
 					}
 					if (length > cWidth) {
-						if (to >= runes.Count || (length > 1 && cWidth <= 1)) {
+						if (to >= runes.Length || (length > 1 && cWidth <= 1)) {
 							incomplete = true;
 						}
 						return to;
@@ -475,7 +547,7 @@ namespace Terminal.Gui {
 						} else if (length > cWidth) {
 							return to;
 						} else {
-							return GetNextWhiteSpace (to + 1, cWidth, out incomplete, length);
+							return GetNextWhiteSpace (runes, to + 1, cWidth, out incomplete, length);
 						}
 					} else if (rune.Value == '\t') {
 						length += tabWidth + 1;
@@ -484,28 +556,19 @@ namespace Terminal.Gui {
 						} else if (length > cWidth && tabWidth > cWidth) {
 							return to;
 						} else {
-							return GetNextWhiteSpace (to + 1, cWidth, out incomplete, length);
+							return GetNextWhiteSpace (runes, to + 1, cWidth, out incomplete, length);
 						}
 					}
 					to++;
 				}
-				if (cLength > 0 && to < runes.Count && runes [to].Value != ' ' && runes [to].Value != '\t') {
+				if (cLength > 0 && to < runes.Length && runes [to].Value != ' ' && runes [to].Value != '\t') {
 					return from;
-				} else if (cLength > 0 && to < runes.Count && (runes [to].Value == ' ' || runes [to].Value == '\t')) {
+				} else if (cLength > 0 && to < runes.Length && (runes [to].Value == ' ' || runes [to].Value == '\t')) {
 					return lastFrom;
 				} else {
 					return to;
 				}
 			}
-
-			if (start < text.GetRuneCount ()) {
-				var str = StringExtensions.ToString (runes.GetRange (start, runes.Count - start));
-				if (IsVerticalDirection (textDirection) || preserveTrailingSpaces || (!preserveTrailingSpaces && str.GetColumns () <= width)) {
-					lines.Add (str);
-				}
-			}
-
-			return lines;
 		}
 
 		/// <summary>
@@ -534,7 +597,7 @@ namespace Terminal.Gui {
 			const int MaxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
 
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 			if (string.IsNullOrEmpty (text)) {
 				return text;
@@ -609,7 +672,7 @@ namespace Terminal.Gui {
 			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~2 kiB.
 
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 			if (string.IsNullOrEmpty (text)) {
 				return text;
@@ -769,7 +832,7 @@ namespace Terminal.Gui {
 			bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("width cannot be negative");
+				throw new ArgumentOutOfRangeException (nameof (width), "width cannot be negative");
 			}
 			List<string> lineResult = new List<string> ();
 
@@ -912,6 +975,27 @@ namespace Terminal.Gui {
 		/// <param name="columns">The width.</param>
 		/// <returns>The index of the last Rune in <paramref name="runes"/> that fit in <paramref name="columns"/>.</returns>
 		private static int GetLengthThatFits (StringRuneEnumerator runes, int columns)
+		{
+			int runesLength = 0;
+			int runeIdx = 0;
+			foreach (var rune in runes) {
+				int runeWidth = Math.Max (rune.GetColumns (), 1);
+				if (runesLength + runeWidth > columns) {
+					break;
+				}
+				runesLength += runeWidth;
+				runeIdx++;
+			}
+			return runeIdx;
+		}
+
+		/// <summary>
+		/// Gets the number of Runes in a span that will fit in <paramref name="columns"/>.
+		/// </summary>
+		/// <param name="runes">The enumerator of runes.</param>
+		/// <param name="columns">The width.</param>
+		/// <returns>The index of the last Rune in <paramref name="runes"/> that fit in <paramref name="columns"/>.</returns>
+		public static int GetLengthThatFits (in ReadOnlySpan<Rune> runes, int columns)
 		{
 			int runesLength = 0;
 			int runeIdx = 0;

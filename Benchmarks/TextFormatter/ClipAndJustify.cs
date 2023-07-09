@@ -25,7 +25,7 @@ namespace Benchmarks.TextFormatter {
 		private static string RuneListPassthroughImplementation (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 			if (string.IsNullOrEmpty (text)) {
 				return text;
@@ -65,7 +65,7 @@ namespace Benchmarks.TextFormatter {
 			const int MaxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
 
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 			if (string.IsNullOrEmpty (text)) {
 				return text;

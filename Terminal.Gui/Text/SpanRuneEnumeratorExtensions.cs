@@ -30,7 +30,7 @@ namespace Terminal.Gui {
 		/// <remarks>
 		/// This is a Terminal.Gui extension method to <see cref="SpanRuneEnumerator"/> to support TUI text manipulation.
 		/// </remarks>
-		/// <param name="str">The string to count.</param>
+		/// <param name="runes">The string to count.</param>
 		/// <returns></returns>
 		public static int GetRuneCount (this SpanRuneEnumerator runes)
 		{

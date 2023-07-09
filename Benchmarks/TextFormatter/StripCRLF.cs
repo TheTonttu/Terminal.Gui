@@ -117,6 +117,84 @@ namespace Benchmarks.TextFormatter {
 			return stringBuilder.ToString ();
 		}
 
+		[Benchmark]
+		[ArgumentsSource (nameof (DataSource))]
+		public string SpanBuffer (string str, bool keepNewLine = false)
+		{
+			char[] buffer = new char[str.Length];
+			string result = string.Empty;
+			for (int i = 0; i < Repetitions; i++) {
+				int charsWritten = SpanBufferImplementation (str, buffer, keepNewLine);
+				result = new string (buffer, 0, charsWritten);
+			}
+			return result;
+		}
+
+		internal static int SpanBufferImplementation (in ReadOnlySpan<char> str, in Span<char> buffer, bool keepNewLine = false)
+		{
+			const string newlineChars = "\r\n";
+
+			var remaining = str;
+			var remainingBuffer = buffer;
+			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
+			// Early exit if there are no newline characters.
+			if (firstNewlineCharIndex < 0) {
+				str.CopyTo (buffer);
+				return str.Length;
+			}
+
+			var firstSegment = remaining[..firstNewlineCharIndex];
+			firstSegment.CopyTo (remainingBuffer);
+			remainingBuffer = remainingBuffer [firstSegment.Length..];
+
+			// The first newline is not skipped at this point because the "keepNewLine" condition has not been evaluated.
+			// This means there will be 1 extra iteration because the same newline index is checked again in the loop.
+			remaining = remaining [firstNewlineCharIndex..];
+
+			while (remaining.Length > 0) {
+				int newlineCharIndex = remaining.IndexOfAny (newlineChars);
+				if (newlineCharIndex < 0) {
+					break;
+				}
+
+				var segment = remaining[..newlineCharIndex];
+				segment.CopyTo (remainingBuffer);
+				remainingBuffer = remainingBuffer [segment.Length..];
+
+				int stride = segment.Length;
+				// Evaluate how many newline characters to preserve.
+				char newlineChar = remaining [newlineCharIndex];
+				if (newlineChar == '\n') {
+					stride++;
+					if (keepNewLine) {
+						remainingBuffer [0] = '\n';
+						remainingBuffer = remainingBuffer [1..];
+					}
+				} else /* '\r' */ {
+					int nextCharIndex = newlineCharIndex + 1;
+					bool crlf = nextCharIndex < remaining.Length && remaining [nextCharIndex] == '\n';
+					if (crlf) {
+						stride += 2;
+						if (keepNewLine) {
+							remainingBuffer [0] = '\n';
+							remainingBuffer = remainingBuffer [1..];
+						}
+					} else {
+						stride++;
+						if (keepNewLine) {
+							remainingBuffer [0] = '\r';
+							remainingBuffer = remainingBuffer [1..];
+						}
+					}
+				}
+				remaining = remaining [stride..];
+			}
+			remaining.CopyTo (remainingBuffer);
+			remainingBuffer = remainingBuffer [remaining.Length..];
+
+			return buffer.Length - remainingBuffer.Length;
+		}
+
 		public IEnumerable<object []> DataSource ()
 		{
 			string[] textPermutations = {
