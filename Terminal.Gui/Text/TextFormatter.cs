@@ -623,7 +623,9 @@ namespace Terminal.Gui {
 						length += tabWidth + 1;
 						if (length == tabWidth && tabWidth > cWidth) {
 							return to + 1;
-						} else if (length > cWidth && tabWidth > cWidth) {
+						} else if (length > cWidth && tabWidth > cWidth
+							// HACK: Prevent infinite loop when tabWidth > cWidth
+							&& from != to) {
 							return to;
 						} else {
 							return GetNextWhiteSpace (runes, to + 1, cWidth, out incomplete, length);
