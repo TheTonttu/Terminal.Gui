@@ -1576,5 +1576,91 @@ namespace Terminal.Gui.TextTests {
 			int actualWidth = TextFormatter.MaxWidth (input, maxColumns);
 			Assert.Equal (expectedWidth, actualWidth);
 		}
+
+		[Theory]
+		[MemberData (nameof (WordWrapTestData))]
+		public void WordWrap_ReturnsWrappedLines (string input, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection, string [] expectedLines)
+		{
+			var actualLines = TextFormatter.WordWrapText (input, width, preserveTrailingSpaces, tabWidth, textDirection);
+			Assert.Equal (expectedLines, actualLines);
+		}
+
+		public static IEnumerable<object []> WordWrapTestData ()
+		{
+			// Horizontal
+			yield return new object [] {
+				"0", 1, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "0" }
+			};
+			yield return new object [] {
+				"0123456789", 1, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }
+			};
+			yield return new object [] {
+				"0123456789", 3, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "012", "345", "678", "9" }
+			};
+			yield return new object [] {
+				"0123456789", 30, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "0123456789" }
+			};
+			yield return new object [] {
+				"012 345 678 9   ", 3, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "012", " ", "345", " ", "678", " 9 ", "  " }
+			};
+			yield return new object [] {
+				"012 345 678 9   ", 3, false, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "012", "345", "678", "9  " }
+			};
+			yield return new object [] {
+				"012 345 678 9   ", 5, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "012 ", "345 ", "678 ", "9   " }
+			};
+			yield return new object [] {
+				"Hello\tWorld", 4, true, 3, TextDirection.LeftRight_TopBottom,
+				new [] { "Hell", "o\t", "Worl", "d" }
+			};
+			yield return new object [] {
+				"Hello\tWorld", 4, true, 5, TextDirection.LeftRight_TopBottom,
+				new [] { "Hell", "o", "\t", "Worl", "d" }
+			};
+			// Vertical
+			yield return new object [] {
+				"0", 1, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "0" }
+			};
+			yield return new object [] {
+				"0123456789", 1, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }
+			};
+			yield return new object [] {
+				"0123456789", 3, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "012", "345", "678", "9" }
+			};
+			yield return new object [] {
+				"0123456789", 30, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "0123456789" }
+			};
+			yield return new object [] {
+				"012 345 678 9   ", 3, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "012", " ", "345", " ", "678", " 9 ", "  " }
+			};
+			yield return new object [] {
+				"012 345 678 9   ", 3, false, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "012", "345", "678", "9  " }
+			};
+			yield return new object [] {
+				"012 345 678 9   ", 5, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "012 ", "345 ", "678 ", "9   " }
+			};
+			yield return new object [] {
+				"Hello\tWorld", 4, true, 3, TextDirection.TopBottom_LeftRight,
+				new [] { "Hell", "o\t", "Worl", "d" }
+			};
+			yield return new object [] {
+				"Hello\tWorld", 4, true, 5, TextDirection.TopBottom_LeftRight,
+				new [] { "Hell", "o", "\t", "Worl", "d" }
+			};
+		}
 	}
 }

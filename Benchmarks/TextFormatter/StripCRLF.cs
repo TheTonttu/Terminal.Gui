@@ -135,7 +135,6 @@ namespace Benchmarks.TextFormatter {
 			const string newlineChars = "\r\n";
 
 			var remaining = str;
-			var remainingBuffer = buffer;
 			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
 			// Early exit if there are no newline characters.
 			if (firstNewlineCharIndex < 0) {
@@ -143,6 +142,7 @@ namespace Benchmarks.TextFormatter {
 				return str.Length;
 			}
 
+			var remainingBuffer = buffer;
 			var firstSegment = remaining[..firstNewlineCharIndex];
 			firstSegment.CopyTo (remainingBuffer);
 			remainingBuffer = remainingBuffer [firstSegment.Length..];

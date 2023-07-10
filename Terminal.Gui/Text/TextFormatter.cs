@@ -187,7 +187,6 @@ namespace Terminal.Gui {
 			const string newlineChars = "\r\n";
 
 			var remaining = str;
-			var remainingBuffer = buffer;
 			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
 			// Early exit if there are no newline characters.
 			if (firstNewlineCharIndex < 0) {
@@ -195,6 +194,7 @@ namespace Terminal.Gui {
 				return str.Length;
 			}
 
+			var remainingBuffer = buffer;
 			var firstSegment = remaining[..firstNewlineCharIndex];
 			firstSegment.CopyTo (remainingBuffer);
 			remainingBuffer = remainingBuffer [firstSegment.Length..];
@@ -296,6 +296,65 @@ namespace Terminal.Gui {
 			}
 			stringBuilder.Append (remaining);
 			return stringBuilder.ToString ();
+		}
+
+		internal static int ReplaceCRLFWithSpace (in ReadOnlySpan<char> str, in Span<char> buffer)
+		{
+			const string newlineChars = "\r\n";
+
+			var remaining = str;
+			int firstNewlineCharIndex = remaining.IndexOfAny (newlineChars);
+			// Early exit if there are no newline characters.
+			if (firstNewlineCharIndex < 0) {
+				str.CopyTo (buffer);
+				return str.Length;
+			}
+
+			var remainingBuffer = buffer;
+
+			var firstSegment = remaining[..firstNewlineCharIndex];
+			firstSegment.CopyTo (remainingBuffer);
+			remainingBuffer = remainingBuffer [firstSegment.Length..];
+
+			// The first newline is not skipped at this point because the condition has not been evaluated.
+			// This means there will be 1 extra iteration because the same newline index is checked again in the loop.
+			remaining = remaining [firstNewlineCharIndex..];
+
+			while (remaining.Length > 0) {
+				int newlineCharIndex = remaining.IndexOfAny (newlineChars);
+				if (newlineCharIndex < 0) {
+					break;
+				}
+
+				var segment = remaining[..newlineCharIndex];
+				segment.CopyTo (remainingBuffer);
+				remainingBuffer = remainingBuffer [segment.Length..];
+
+				int stride = segment.Length;
+				// Replace newlines
+				char newlineChar = remaining [newlineCharIndex];
+				if (newlineChar == '\n') {
+					stride++;
+					remainingBuffer [0] = ' ';
+					remainingBuffer = remainingBuffer [1..];
+				} else /* '\r' */ {
+					int nextCharIndex = newlineCharIndex + 1;
+					bool crlf = nextCharIndex < remaining.Length && remaining [nextCharIndex] == '\n';
+					if (crlf) {
+						stride += 2;
+						remainingBuffer [0] = ' ';
+						remainingBuffer = remainingBuffer [1..];
+					} else {
+						stride++;
+						remainingBuffer [0] = ' ';
+						remainingBuffer = remainingBuffer [1..];
+					}
+				}
+				remaining = remaining [stride..];
+			}
+			remaining.CopyTo (remainingBuffer);
+			remainingBuffer = remainingBuffer [remaining.Length..];
+			return buffer.Length - remainingBuffer.Length;
 		}
 
 		/// <summary>
@@ -409,6 +468,17 @@ namespace Terminal.Gui {
 			string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
+			return WordWrapText (text.AsSpan (), width, preserveTrailingSpaces, tabWidth, textDirection);
+		}
+
+		/// <summary>
+		/// Formats the provided text (read-only char span) to fit within the width provided using word wrapping.
+		/// </summary>
+		/// <inheritdoc cref="WordWrapText(string, int, bool, int, TextDirection)"/>
+		public static List<string> WordWrapText (
+			in ReadOnlySpan<char> text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
+			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
+		{
 			const int MaxStackallocStripBufferSize = 512; // ~1 kiB
 			const int MaxStackallocRuneBufferSize = 256; // ~1 kiB
 
@@ -416,7 +486,7 @@ namespace Terminal.Gui {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 
-			if (string.IsNullOrEmpty (text)) {
+			if (text.IsEmpty) {
 				return new List<string> ();
 			}
 
@@ -426,7 +496,7 @@ namespace Terminal.Gui {
 			if (maxTextWidth <= width) {
 				// Early exit when the simplest worst case length fits the single line.
 				if (preserveTrailingSpaces && !text.Contains ('\t')) {
-					return new () { text };
+					return new () { text.ToString () };
 				}
 			}
 
@@ -614,7 +684,7 @@ namespace Terminal.Gui {
 			}
 
 			int maxRuneCount = text.Length;
-			Rune[] rentedRuneArray = null;
+			Rune[]? rentedRuneArray = null;
 			Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
 				? stackalloc Rune[maxRuneCount]
 				: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
@@ -678,7 +748,7 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			Range[] rentedWordBuffer = null;
+			Range[]? rentedWordBuffer = null;
 			try {
 				int firstSpaceIndex = text.IndexOf (' ');
 				if (firstSpaceIndex == -1) {
