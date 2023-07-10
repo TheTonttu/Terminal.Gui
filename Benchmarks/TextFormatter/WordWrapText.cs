@@ -117,7 +117,11 @@ namespace Benchmarks.TextFormatter {
 						length += tabWidth + 1;
 						if (length == tabWidth && tabWidth > cWidth) {
 							return to + 1;
-						} else if (length > cWidth && tabWidth > cWidth) {
+						} else if (length > cWidth && tabWidth > cWidth
+							// Prevent infinite loop when tabWidth > cWidth.
+							// This is not part of the original implementation but instead to move the benchmark forward
+							// instead of waiting for out of memory exception which can take a while depending on amount of system memory.
+							&& from != to) {
 							return to;
 						} else {
 							return GetNextWhiteSpace (to + 1, cWidth, out incomplete, length);
@@ -303,7 +307,9 @@ namespace Benchmarks.TextFormatter {
 						length += tabWidth + 1;
 						if (length == tabWidth && tabWidth > cWidth) {
 							return to + 1;
-						} else if (length > cWidth && tabWidth > cWidth) {
+						} else if (length > cWidth && tabWidth > cWidth
+							// HACK: Prevent infinite loop when tabWidth > cWidth
+							&& from != to) {
 							return to;
 						} else {
 							return GetNextWhiteSpace (runes, to + 1, cWidth, out incomplete, length);
@@ -332,7 +338,7 @@ namespace Benchmarks.TextFormatter {
 
 			bool[] trailingSpace = { true, false };
 
-			int[] tabWidths = { 0, 1, 3 };
+			int[] tabWidths = { 1, 3 };
 
 			string[] texts = {
 				"",
@@ -356,14 +362,11 @@ namespace Benchmarks.TextFormatter {
 					maxColumns.RemoveAt (1);
 				}
 
-				foreach (int width in maxColumns) {
-					foreach (bool preserveTrailingSpaces in trailingSpace) {
-						foreach (var tabWidth in tabWidths) {
-							foreach (var direction in directions) {
-								yield return new object [] { text, width, preserveTrailingSpaces, tabWidth, direction };
-							}
-						}
-					}
+				foreach (int width in maxColumns)
+				foreach (bool preserveTrailingSpaces in trailingSpace)
+				foreach (var tabWidth in tabWidths)
+				foreach (var direction in directions) {
+					yield return new object [] { text, width, preserveTrailingSpaces, tabWidth, direction };
 				}
 			}
 		}
