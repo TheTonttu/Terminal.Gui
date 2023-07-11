@@ -900,9 +900,12 @@ namespace Terminal.Gui {
 		/// If <paramref name="width"/> is int.MaxValue, the text will be formatted to the maximum width possible. 
 		/// </para>
 		/// </remarks>
-		public static List<string> Format (string text, int width, bool justify, bool wordWrap,
+		public static List<string> Format (
+			string text, int width, bool justify, bool wordWrap,
 			bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
+			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "width cannot be negative");
 			}
@@ -913,33 +916,49 @@ namespace Terminal.Gui {
 				return lineResult;
 			}
 
-			if (wordWrap == false) {
-				text = ReplaceCRLFWithSpace (text);
-				lineResult.Add (ClipAndJustify (text, width, justify, textDirection));
-				return lineResult;
-			}
+			char[]? charRentedArray = null;
+			try {
+				Span<char> charBuffer = text.Length <= MaxStackallocCharBufferSize
+					? stackalloc char[text.Length]
+					: (charRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
-			var runes = StripCRLF (text, true).ToRuneList ();
-			int runeCount = runes.Count;
-			int lp = 0;
-			for (int i = 0; i < runeCount; i++) {
-				Rune c = runes [i];
-				if (c.Value == '\n') {
-					var wrappedLines = WordWrapText (StringExtensions.ToString (runes.GetRange (lp, i - lp)), width, preserveTrailingSpaces, tabWidth, textDirection);
+				if (wordWrap == false) {
+					int replaceCharsWritten = ReplaceCRLFWithSpace (text, charBuffer);
+					lineResult.Add (ClipAndJustify (new string (charBuffer [..replaceCharsWritten]), width, justify, textDirection));
+					return lineResult;
+				}
+
+				int stripCharsWritten = StripCRLF (text, charBuffer, keepNewLine: true);
+				var strippedText = charBuffer[..stripCharsWritten];
+
+				var remaining = strippedText;
+				while (remaining.Length > 0) {
+					int newlineIdx = remaining.IndexOf('\n');
+					if (newlineIdx == -1) {
+						break;
+					}
+
+					var lineSegment = remaining[..newlineIdx];
+					var wrappedLines = WordWrapText (lineSegment, width, preserveTrailingSpaces, tabWidth, textDirection);
 					foreach (var line in wrappedLines) {
 						lineResult.Add (ClipAndJustify (line, width, justify, textDirection));
 					}
 					if (wrappedLines.Count == 0) {
 						lineResult.Add (string.Empty);
 					}
-					lp = i + 1;
+					remaining = remaining [(lineSegment.Length + 1)..];
+				}
+
+				foreach (var line in WordWrapText (remaining, width, preserveTrailingSpaces, tabWidth, textDirection)) {
+					lineResult.Add (ClipAndJustify (line, width, justify, textDirection));
+				}
+
+				return lineResult;
+			} finally {
+				if (charRentedArray != null) {
+					ArrayPool<char>.Shared.Return (charRentedArray);
 				}
 			}
-			foreach (var line in WordWrapText (StringExtensions.ToString (runes.GetRange (lp, runeCount - lp)), width, preserveTrailingSpaces, tabWidth, textDirection)) {
-				lineResult.Add (ClipAndJustify (line, width, justify, textDirection));
-			}
-
-			return lineResult;
 		}
 
 		/// <summary>
