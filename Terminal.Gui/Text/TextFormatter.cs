@@ -468,6 +468,25 @@ namespace Terminal.Gui {
 			string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
+			if (width < 0) {
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
+			}
+
+			if (string.IsNullOrEmpty (text)) {
+				return new List<string> ();
+			}
+
+			// This duplication avoids extra string allocation compared to early exit in the span variant.
+			int maxTextWidth = IsHorizontalDirection(textDirection)
+				? text.Length * 2
+				: text.Length;
+			if (maxTextWidth <= width) {
+				// Early exit when the simplest worst case length fits the single line.
+				if (preserveTrailingSpaces && !text.Contains ('\t')) {
+					return new () { text };
+				}
+			}
+
 			return WordWrapText (text.AsSpan (), width, preserveTrailingSpaces, tabWidth, textDirection);
 		}
 
@@ -507,11 +526,11 @@ namespace Terminal.Gui {
 			Rune[]? runeRentedArray = null;
 			try {
 				Span<char> stripBuffer = text.Length <= MaxStackallocStripBufferSize
-					? stackalloc char[MaxStackallocStripBufferSize]
+					? stackalloc char[text.Length]
 					: (stripRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
 				Span<Rune> runeBuffer = text.Length <= MaxStackallocRuneBufferSize
-					? stackalloc Rune[MaxStackallocRuneBufferSize]
+					? stackalloc Rune[text.Length]
 					: (runeRentedArray = ArrayPool<Rune>.Shared.Rent(text.Length));
 
 				int crlfStrippedCharsWritten = StripCRLF (text, stripBuffer);
@@ -528,13 +547,13 @@ namespace Terminal.Gui {
 					while ((end = start) < runes.Length) {
 						end = GetNextWhiteSpace (runes, start, width, out bool incomplete);
 						if (end == 0 && incomplete) {
-							start = text.GetRuneCount ();
+							start = runes.Length;
 							break;
 						}
 						lines.Add (StringExtensions.ToString (runes [start..end]));
 						start = end;
 						if (incomplete) {
-							start = text.GetRuneCount ();
+							start = runes.Length;
 							break;
 						}
 					}
@@ -545,7 +564,7 @@ namespace Terminal.Gui {
 								end--;
 							if (end == start)
 								end = start + GetLengthThatFits (runes [end..], width);
-							var str = StringExtensions.ToString (runes[start..end ]);
+							var str = StringExtensions.ToString (runes[start..end]);
 							if (end > start && str.GetColumns () <= width) {
 								lines.Add (str);
 								start = end;
@@ -574,7 +593,7 @@ namespace Terminal.Gui {
 					}
 				}
 
-				if (start < text.GetRuneCount ()) {
+				if (start < runes.Length) {
 					var str = StringExtensions.ToString (runes[start..]);
 					if (IsVerticalDirection (textDirection) || preserveTrailingSpaces || (!preserveTrailingSpaces && str.GetColumns () <= width)) {
 						lines.Add (str);
