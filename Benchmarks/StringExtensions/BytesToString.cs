@@ -7,14 +7,14 @@ namespace Benchmarks.StringExtensions {
 	public class BytesToString {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (ArrayDataSource))]
 		public string IEnumerableToArray_Array (IEnumerable<byte> bytes, Encoding? encoding = null)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = IEnumerableToArrayImplementation (bytes, ref encoding);
 			}
 			return str;
@@ -25,7 +25,7 @@ namespace Benchmarks.StringExtensions {
 		public string IEnumerableToArray_List (IEnumerable<byte> bytes, Encoding? encoding = null)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = IEnumerableToArrayImplementation (bytes, ref encoding);
 			}
 			return str;
@@ -44,7 +44,7 @@ namespace Benchmarks.StringExtensions {
 		public string ReadOnlySpan_Array (byte [] bytes, Encoding? encoding = null)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = ReadOnlySpanImplementation (bytes.AsSpan (), encoding);
 			}
 			return str;
@@ -55,7 +55,7 @@ namespace Benchmarks.StringExtensions {
 		public string ReadOnlySpan_List (List<byte> bytes, Encoding? encoding = null)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), encoding);
 			}
 			return str;

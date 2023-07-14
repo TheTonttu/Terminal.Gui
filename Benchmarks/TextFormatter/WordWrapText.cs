@@ -8,14 +8,14 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class WordWrapText {
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> Original (string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
 		{
 			List<string> result = new();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = OriginalImplementation (text, width, preserveTrailingSpaces, tabWidth, textDirection);
 			}
 			return result;
@@ -153,7 +153,7 @@ namespace Benchmarks.TextFormatter {
 		public List<string> ArrayBuffers (string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
 		{
 			List<string> result = new();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ArrayBuffersImplementation (text, width, preserveTrailingSpaces, tabWidth, textDirection);
 			}
 			return result;
@@ -332,7 +332,7 @@ namespace Benchmarks.TextFormatter {
 		public List<string> StringAsSpanExactStackallocSizes (string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
 		{
 			List<string> result = new();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = StringAsSpanExactStackallocSizesImplementation (text, width, preserveTrailingSpaces, tabWidth, textDirection);
 			}
 			return result;
@@ -534,8 +534,6 @@ namespace Benchmarks.TextFormatter {
 
 		public IEnumerable<object []> DataSource ()
 		{
-			//string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection
-
 			var directions = new [] {
 				TextDirection.LeftRight_TopBottom,
 				TextDirection.TopBottom_LeftRight,

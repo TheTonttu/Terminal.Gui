@@ -7,21 +7,21 @@ namespace Benchmarks.RuneExtensions {
 	public class DecodeSurrogatePair {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public bool ToStringToCharArray (Rune rune)
 		{
 			bool result = default;
-			char[] chars;
-			for (int i = 0; i < Repetitions; i++) {
+			char[]? chars;
+			for (int i = 0; i < N; i++) {
 				ToStringToCharArrayImplementation (rune, out chars);
 			}
 			return result;
 		}
 
-		public static bool ToStringToCharArrayImplementation (Rune rune, out char [] chars)
+		public static bool ToStringToCharArrayImplementation (Rune rune, out char []? chars)
 		{
 			if (Tui.RuneExtensions.IsSurrogatePair (rune)) {
 				chars = rune.ToString ().ToCharArray ();
@@ -36,14 +36,14 @@ namespace Benchmarks.RuneExtensions {
 		public bool EncodeToCharArray (Rune rune)
 		{
 			bool result = default;
-			char[] chars;
-			for (int i = 0; i < Repetitions; i++) {
+			char[]? chars;
+			for (int i = 0; i < N; i++) {
 				EncodeToCharArrayImplementation (rune, out chars);
 			}
 			return result;
 		}
 
-		private static bool EncodeToCharArrayImplementation (Rune rune, out char [] chars)
+		private static bool EncodeToCharArrayImplementation (Rune rune, out char []? chars)
 		{
 			if (Tui.RuneExtensions.IsSurrogatePair (rune)) {
 				chars = new char [rune.Utf16SequenceLength];
@@ -59,14 +59,14 @@ namespace Benchmarks.RuneExtensions {
 		public bool InlineSurrogatePairCheck (Rune rune)
 		{
 			bool result = default;
-			char[] chars;
-			for (int i = 0; i < Repetitions; i++) {
+			char[]? chars;
+			for (int i = 0; i < N; i++) {
 				InlineSurrogatePairCheckImplementation (rune, out chars);
 			}
 			return result;
 		}
 
-		private static bool InlineSurrogatePairCheckImplementation (Rune rune, out char [] chars)
+		private static bool InlineSurrogatePairCheckImplementation (Rune rune, out char []? chars)
 		{
 			Span<char> charBuffer = stackalloc char[2];
 			int charsWritten = rune.EncodeToUtf16 (charBuffer);
@@ -83,14 +83,14 @@ namespace Benchmarks.RuneExtensions {
 		public bool EarlyExitBmp (Rune rune)
 		{
 			bool result = default;
-			char[] chars;
-			for (int i = 0; i < Repetitions; i++) {
+			char[]? chars;
+			for (int i = 0; i < N; i++) {
 				EarlyExitBmpImplementation (rune, out chars);
 			}
 			return result;
 		}
 
-		private static bool EarlyExitBmpImplementation (Rune rune, out char [] chars)
+		private static bool EarlyExitBmpImplementation (Rune rune, out char []? chars)
 		{
 			if (rune.IsBmp) {
 				chars = null;

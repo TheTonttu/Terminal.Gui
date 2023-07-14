@@ -6,14 +6,14 @@ namespace Benchmarks.RuneExtensions {
 	public class IsSurrogatePair {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public bool ToString (Rune rune)
 		{
 			bool result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				ToStringImplementation (rune);
 			}
 			return result;
@@ -29,7 +29,7 @@ namespace Benchmarks.RuneExtensions {
 		public bool StackallocChars (Rune rune)
 		{
 			bool result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				StackallocCharsImplementation (rune);
 			}
 			return result;
@@ -47,7 +47,7 @@ namespace Benchmarks.RuneExtensions {
 		public bool EarlyExitBmp (Rune rune)
 		{
 			bool result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				EarlyExitBmpImplementation (rune);
 			}
 			return result;

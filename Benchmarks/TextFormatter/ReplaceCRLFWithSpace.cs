@@ -8,14 +8,14 @@ namespace Benchmarks.TextFormatter {
 	public class ReplaceCRLFWithSpace {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string ToRuneListReplace (string str)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ToRuneListReplaceImplementation (str);
 			}
 			return result;
@@ -49,7 +49,7 @@ namespace Benchmarks.TextFormatter {
 		public string EarlyExitStringBuilderCharSpanSlice (string str)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = EarlyExitStringBuilderCharSpanSliceImplementation (str);
 			}
 			return result;
@@ -112,7 +112,7 @@ namespace Benchmarks.TextFormatter {
 		{
 			char[] buffer = new char[str.Length];
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				int charsWritten = SpanBufferImplementation (str, buffer);
 				result = new string (buffer, 0, charsWritten);
 			}

@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using System.Text;
 using Terminal.Gui;
 using Tui = Terminal.Gui;
 
@@ -8,14 +7,14 @@ namespace Benchmarks.TextFormatter {
 	public class MaxWidth {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int NestedLinq (string text, int maxColumns)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = NestedLinqImplementation (text, maxColumns);
 			}
 			return result;
@@ -40,7 +39,7 @@ namespace Benchmarks.TextFormatter {
 		public int NestedForeach (string text, int maxColumns)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = NestedForeachImplementation (text, maxColumns);
 			}
 			return result;
@@ -65,7 +64,6 @@ namespace Benchmarks.TextFormatter {
 
 		public IEnumerable<object []> DataSource ()
 		{
-
 			string[] texts = {
 				"Hello World",
 				// Single line

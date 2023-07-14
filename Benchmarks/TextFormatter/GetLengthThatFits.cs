@@ -7,14 +7,14 @@ namespace Benchmarks.TextFormatter {
 	public class GetLengthThatFits {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int ToRuneList (string str, int columns)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ToRuneListImplementation (str, columns);
 			}
 			return result;
@@ -53,7 +53,7 @@ namespace Benchmarks.TextFormatter {
 		public int EnumerateStringRunes (string str, int columns)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = EnumerateStringRunesImplementation (str.EnumerateRunes(), columns);
 			}
 			return result;
@@ -89,7 +89,6 @@ namespace Benchmarks.TextFormatter {
 				foreach (var column in columns) {
 					yield return new object [] { text, column };
 				}
-
 			}
 		}
 	}

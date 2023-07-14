@@ -9,14 +9,14 @@ namespace Benchmarks.TextFormatter {
 	public class ClipAndJustify {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string RuneListPassthrough (string text, int width, bool justify, TextDirection textDirection)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = RuneListPassthroughImplementation (text, width, justify, textDirection);
 			}
 			return result;
@@ -54,7 +54,7 @@ namespace Benchmarks.TextFormatter {
 		public string RentedRuneArray (string text, int width, bool justify, TextDirection textDirection)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = RentedRuneArrayImplementation (text, width, justify, textDirection);
 			}
 			return result;
@@ -82,7 +82,7 @@ namespace Benchmarks.TextFormatter {
 			}
 
 			int maxRuneCount = text.Length;
-			Rune[] rentedRuneArray = null;
+			Rune[]? rentedRuneArray = null;
 			Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
 				? stackalloc Rune[maxRuneCount]
 				: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
@@ -157,12 +157,10 @@ namespace Benchmarks.TextFormatter {
 					maxColumns.RemoveAt (1);
 				}
 
-				foreach (int width in maxColumns) {
-					foreach (bool justify in justification) {
-						foreach (var direction in directions) {
-							yield return new object [] { text, width, justify, direction };
-						}
-					}
+				foreach (int width in maxColumns)
+				foreach (bool justify in justification)
+				foreach (var direction in directions) {
+					yield return new object [] { text, width, justify, direction };
 				}
 			}
 		}

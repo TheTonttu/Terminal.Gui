@@ -8,14 +8,14 @@ namespace Benchmarks.TextFormatter {
 	public class ClipOrPad {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string LinqEnumerate (string text, int width)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = LinqEnumerateImplementation (text, width);
 			}
 			return result;
@@ -44,7 +44,7 @@ namespace Benchmarks.TextFormatter {
 		public string StringBuilderAppendRunes (string text, int width)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = StringBuilderAppendRunesImplementation (text, width);
 			}
 			return result;
@@ -79,7 +79,7 @@ namespace Benchmarks.TextFormatter {
 		public string ReuseStackallocCharBuffer (string text, int width)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ReuseStackallocCharBufferImplementation (text, width);
 			}
 			return result;
