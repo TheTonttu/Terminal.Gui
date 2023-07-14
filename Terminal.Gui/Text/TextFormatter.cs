@@ -771,8 +771,8 @@ namespace Terminal.Gui {
 
 			Range[]? rentedWordBuffer = null;
 			try {
-				int firstSpaceIndex = text.IndexOf (' ');
-				if (firstSpaceIndex == -1) {
+				int firstSpaceIdx = text.IndexOf (' ');
+				if (firstSpaceIdx == -1) {
 					// Text has no spaces so nothing to justify because spaces will not be added to the end.
 					return text;
 				}
@@ -783,34 +783,34 @@ namespace Terminal.Gui {
 					? stackalloc Range [WordSearchBufferStackallocLimit]
 					: (rentedWordBuffer = ArrayPool<Range>.Shared.Rent(text.Length));
 
-				int searchIdx = firstSpaceIndex + 1;
+				int searchIdx = firstSpaceIdx + 1;
 
-				int freeBufferIndex = 0;
-				wordSearchBuffer [freeBufferIndex] = (0..firstSpaceIndex);
-				freeBufferIndex++;
+				int freeBufferIdx = 0;
+				wordSearchBuffer [freeBufferIdx] = (0..firstSpaceIdx);
+				freeBufferIdx++;
 
 				while (searchIdx < text.Length) {
-					int spaceIndex = text.IndexOf (' ', searchIdx);
-					if (spaceIndex == -1) {
+					int spaceIdx = text.IndexOf (' ', searchIdx);
+					if (spaceIdx == -1) {
 						break;
 					}
 
-					int startIndex = searchIdx;
-					int wordLength = (spaceIndex - searchIdx);
-					int endIndex = searchIdx + wordLength;
-					wordSearchBuffer [freeBufferIndex] = (startIndex..endIndex);
-					freeBufferIndex++;
+					int startIdx = searchIdx;
+					int wordLength = (spaceIdx - searchIdx);
+					int endIdx = searchIdx + wordLength;
+					wordSearchBuffer [freeBufferIdx] = (startIdx..endIdx);
+					freeBufferIdx++;
 
-					searchIdx = spaceIndex + 1;
+					searchIdx = spaceIdx + 1;
 				}
 
 				if (searchIdx < text.Length) {
 					int lastWordLength = text.Length - searchIdx;
-					wordSearchBuffer [freeBufferIndex] = (searchIdx..(searchIdx + lastWordLength));
-					freeBufferIndex++;
+					wordSearchBuffer [freeBufferIdx] = (searchIdx..(searchIdx + lastWordLength));
+					freeBufferIdx++;
 				}
 
-				int wordCount = freeBufferIndex;
+				int wordCount = freeBufferIdx;
 				var words = wordSearchBuffer[..wordCount];
 
 				// Calculate text count based on found words.
