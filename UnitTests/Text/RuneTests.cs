@@ -819,12 +819,12 @@ public class RuneTests {
 
 	[Theory]
 	// Last byte is removed from length if the byte is 0.
-	[InlineData("a", "utf-8", 1)]
-	[InlineData("a", "utf-16", 1)]
-	[InlineData("a", "utf-32",3)]
-	[InlineData("𝔹", "utf-8", 4)]
-	[InlineData("𝔹", "utf-16", 4)]
-	[InlineData("𝔹", "utf-32", 3)]
+	[InlineData ("a", "utf-8", 1)]
+	[InlineData ("a", "utf-16", 1)]
+	[InlineData ("a", "utf-32", 3)]
+	[InlineData ("𝔹", "utf-8", 4)]
+	[InlineData ("𝔹", "utf-16", 4)]
+	[InlineData ("𝔹", "utf-32", 3)]
 	public void GetEncodingLength_ReturnsLengthBasedOnSelectedEncoding (string runeStr, string encodingName, int expectedLength)
 	{
 		Rune rune = runeStr.EnumerateRunes ().Single ();
