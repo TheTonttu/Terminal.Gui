@@ -5,14 +5,14 @@ namespace Benchmarks.RuneExtensions {
 	[MemoryDiagnoser]
 	public class GetEncodingLength {
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int ToStringToCharArrayGetBytes (Rune rune, Encoding encoding)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ToStringToCharArrayGetBytesImplementation (rune, encoding);
 			}
 			return result;
@@ -34,13 +34,13 @@ namespace Benchmarks.RuneExtensions {
 		public int StackallocEncodeUtf16ToByteBuffer (Rune rune, Encoding encoding)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = SpanSliceEncodeUtf16ToByteBufferImplementation (rune, encoding);
 			}
 			return result;
 		}
 
-		private static int SpanSliceEncodeUtf16ToByteBufferImplementation (Rune rune, Encoding encoding = null)
+		private static int SpanSliceEncodeUtf16ToByteBufferImplementation (Rune rune, Encoding? encoding = null)
 		{
 			encoding ??= Encoding.UTF8;
 

@@ -9,14 +9,14 @@ namespace Benchmarks.StringExtensions {
 		private static readonly StringBuilder CachedStringBuilder = new StringBuilder();
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string StringConcat (IEnumerable<Rune> runes, int size)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = StringConcatImplementation (runes);
 			}
 			return str;
@@ -38,7 +38,7 @@ namespace Benchmarks.StringExtensions {
 		public string EncodeCharsStringBuilder (IEnumerable<Rune> runes, int size)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = EncodeCharsStringBuilderImplementation (runes);
 			}
 			return str;
@@ -61,7 +61,7 @@ namespace Benchmarks.StringExtensions {
 		public string EncodeCharsCachedStringBuilder (IEnumerable<Rune> runes, int size)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = EncodeCharsCachedStringBuilderImplementation (runes);
 			}
 			return str;
@@ -87,7 +87,7 @@ namespace Benchmarks.StringExtensions {
 		public string RuneSpanStringBuilderAppend (Rune [] runes, int size)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = RuneSpanStringBuilderAppendImplementation (runes);
 			}
 			return str;
@@ -113,7 +113,7 @@ namespace Benchmarks.StringExtensions {
 		public string RuneSpanArrayBuffer (Rune [] runes, int size)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = RuneSpanArrayBufferImplementation (runes);
 			}
 			return str;
@@ -150,7 +150,7 @@ namespace Benchmarks.StringExtensions {
 		public string RuneSpanArrayBufferExactStackallocSize (Rune [] runes, int size)
 		{
 			string str = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				str = RuneSpanArrayBufferExactStackallocSizeImplementation (runes);
 			}
 			return str;

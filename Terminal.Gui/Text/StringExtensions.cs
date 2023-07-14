@@ -48,7 +48,7 @@ public static class StringExtensions {
 	/// </remarks>
 	/// <param name="str">The string to measure.</param>
 	/// <returns></returns>
-	public static int GetColumns (this string str)
+	public static int GetColumns (this string? str)
 	{
 		if (str == null) {
 			return 0;

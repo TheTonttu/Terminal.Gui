@@ -9,7 +9,7 @@ namespace Benchmarks.TextFormatter {
 	public class Format {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
@@ -18,7 +18,7 @@ namespace Benchmarks.TextFormatter {
 			bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
 		{
 			var result = new List<string>();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = OriginalImplementation (text, width, justify, wordWrap, preserveTrailingSpaces, tabWidth, textDirection);
 			}
 			return result;
@@ -74,7 +74,7 @@ namespace Benchmarks.TextFormatter {
 			bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
 		{
 			var result = new List<string>();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ArrayBufferImplementation (text, width, justify, wordWrap, preserveTrailingSpaces, tabWidth, textDirection);
 			}
 			return result;
@@ -148,7 +148,7 @@ namespace Benchmarks.TextFormatter {
 			bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
 		{
 			var result = new List<string>();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ExactStackallocSizeImplementation (text, width, justify, wordWrap, preserveTrailingSpaces, tabWidth, textDirection);
 			}
 			return result;

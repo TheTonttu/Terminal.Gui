@@ -9,14 +9,14 @@ namespace Benchmarks.TextFormatter {
 	public class Justify {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string StringSplit (string text, int width, char spaceChar, TextDirection textDirection)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = StringSplitImplementation (text, width, spaceChar, textDirection);
 			}
 			return result;
@@ -25,7 +25,7 @@ namespace Benchmarks.TextFormatter {
 		private static string StringSplitImplementation (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 			if (string.IsNullOrEmpty (text)) {
 				return text;
@@ -66,7 +66,7 @@ namespace Benchmarks.TextFormatter {
 		public string SpanRangeSplit (string text, int width, char spaceChar, TextDirection textDirection)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = SpanRangeSplitImplementation (text, width, spaceChar, textDirection);
 			}
 			return result;
@@ -77,16 +77,16 @@ namespace Benchmarks.TextFormatter {
 			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~4 kiB.
 
 			if (width < 0) {
-				throw new ArgumentOutOfRangeException ("Width cannot be negative.");
+				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
 			}
 			if (string.IsNullOrEmpty (text)) {
 				return text;
 			}
 
-			Range[] rentedWordBuffer = null;
+			Range[]? rentedWordBuffer = null;
 			try {
-				int firstSpaceIndex = text.IndexOf (' ');
-				if (firstSpaceIndex == -1) {
+				int firstSpaceIdx = text.IndexOf (' ');
+				if (firstSpaceIdx == -1) {
 					// Text has no spaces so nothing to justify because spaces will not be added to the end.
 					return text;
 				}
@@ -97,34 +97,34 @@ namespace Benchmarks.TextFormatter {
 					? stackalloc Range [WordSearchBufferStackallocLimit]
 					: (rentedWordBuffer = ArrayPool<Range>.Shared.Rent(text.Length));
 
-				int searchIdx = firstSpaceIndex + 1;
+				int searchIdx = firstSpaceIdx + 1;
 
-				int freeBufferIndex = 0;
-				wordSearchBuffer [freeBufferIndex] = (0..firstSpaceIndex);
-				freeBufferIndex++;
+				int freeBufferIdx = 0;
+				wordSearchBuffer [freeBufferIdx] = (0..firstSpaceIdx);
+				freeBufferIdx++;
 
 				while (searchIdx < text.Length) {
-					int spaceIndex = text.IndexOf (' ', searchIdx);
-					if (spaceIndex == -1) {
+					int spaceIdx = text.IndexOf (' ', searchIdx);
+					if (spaceIdx == -1) {
 						break;
 					}
 
-					int startIndex = searchIdx;
-					int wordLength = (spaceIndex - searchIdx);
-					int endIndex = searchIdx + wordLength;
-					wordSearchBuffer [freeBufferIndex] = (startIndex..endIndex);
-					freeBufferIndex++;
+					int startIdx = searchIdx;
+					int wordLength = (spaceIdx - searchIdx);
+					int endIdx = searchIdx + wordLength;
+					wordSearchBuffer [freeBufferIdx] = (startIdx..endIdx);
+					freeBufferIdx++;
 
-					searchIdx = spaceIndex + 1;
+					searchIdx = spaceIdx + 1;
 				}
 
 				if (searchIdx < text.Length) {
 					int lastWordLength = text.Length - searchIdx;
-					wordSearchBuffer [freeBufferIndex] = (searchIdx..(searchIdx + lastWordLength));
-					freeBufferIndex++;
+					wordSearchBuffer [freeBufferIdx] = (searchIdx..(searchIdx + lastWordLength));
+					freeBufferIdx++;
 				}
 
-				int wordCount = freeBufferIndex;
+				int wordCount = freeBufferIdx;
 				var words = wordSearchBuffer[..wordCount];
 
 				// Calculate text count based on found words.

@@ -6,14 +6,14 @@ namespace Benchmarks.RuneExtensions {
 	public class Encode {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int ToStringGetBytes (Rune rune, byte [] dest, int start = 0, int count = -1)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ToStringGetBytesInternal (rune, dest, start, count);
 			}
 			return result;
@@ -36,7 +36,7 @@ namespace Benchmarks.RuneExtensions {
 		public int StackallocEncodeUtf8 (Rune rune, byte [] dest, int start = 0, int count = -1)
 		{
 			int result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = StackallocUtf8EncodeInternal (rune, dest, start, count);
 			}
 			return result;

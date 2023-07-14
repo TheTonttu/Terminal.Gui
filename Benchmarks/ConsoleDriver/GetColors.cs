@@ -12,7 +12,7 @@ namespace Benchmarks.ConsoleDriver {
 	public class GetColors {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark(Baseline = true)]
 		[ArgumentsSource(nameof(DataSource))]
@@ -21,7 +21,7 @@ namespace Benchmarks.ConsoleDriver {
 			bool result = default;
 			Color foreground = default;
 			Color background = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = InlineEnumGetValuesImplementation (value, out foreground, out background);
 			}
 			return result;
@@ -53,7 +53,7 @@ namespace Benchmarks.ConsoleDriver {
 			bool result = default;
 			Color foreground = default;
 			Color background = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = CachedEnumValuesListImplementation (value, out foreground, out background);
 			}
 			return result;
@@ -88,7 +88,7 @@ namespace Benchmarks.ConsoleDriver {
 			bool result = default;
 			Color foreground = default;
 			Color background = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = DeduplicateCalcImplementation (value, out foreground, out background);
 			}
 			return result;
@@ -122,7 +122,7 @@ namespace Benchmarks.ConsoleDriver {
 			bool result = default;
 			Color foreground = default;
 			Color background = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = CachedEnumValuesHashSetImplementation (value, out foreground, out background);
 			}
 			return result;
@@ -156,11 +156,11 @@ namespace Benchmarks.ConsoleDriver {
 
 		public IEnumerable<object> DataSource ()
 		{
-			yield return (int)ConsoleColor.White;
 			yield return (int)ConsoleColor.Red;
 			yield return (int)ConsoleColor.Green;
 			yield return (int)ConsoleColor.Blue;
 			yield return (int)ConsoleColor.Black;
+			yield return (int)ConsoleColor.White;
 		}
 	}
 }

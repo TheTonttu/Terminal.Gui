@@ -7,14 +7,14 @@ namespace Benchmarks.StringExtensions {
 	public class DecodeLastRune {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public (Rune rune, int size) RunesToArray (string str, int end = -1)
 		{
 			(Rune rune, int size) result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = RunesToArrayImplementation (str, end);
 			}
 			return result;
@@ -36,7 +36,7 @@ namespace Benchmarks.StringExtensions {
 		public (Rune rune, int size) EnumerateEachRune (string str, int end = -1)
 		{
 			(Rune rune, int size) result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = EnumerateEachRuneImplementation (str, end);
 			}
 			return result;
@@ -60,7 +60,7 @@ namespace Benchmarks.StringExtensions {
 		public (Rune rune, int size) EnumerateEachRuneMoveEndCheckOutOfLoop (string str, int end = -1)
 		{
 			(Rune rune, int size) result = default;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = EnumerateEachRuneMoveEndCheckOutOfLoopImplementation (str, end);
 			}
 			return result;

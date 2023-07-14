@@ -7,14 +7,14 @@ namespace Benchmarks.TextFormatter {
 	public class SplitNewLine {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> ToRuneListToString (string text)
 		{
 			var result = new List<string>();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ToRuneListToStringImplementation (text);
 			}
 			return result;
@@ -65,12 +65,11 @@ namespace Benchmarks.TextFormatter {
 		public List<string> SliceSpanToString (string text)
 		{
 			var result = new List<string>();
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = SliceSpanToStringImplementation (text);
 			}
 			return result;
 		}
-
 
 		private static List<string> SliceSpanToStringImplementation (string text)
 		{

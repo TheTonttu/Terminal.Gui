@@ -7,14 +7,14 @@ namespace Benchmarks.TextFormatter {
 	public class StripCRLF {
 
 		[Params (1, 100, 10_000)]
-		public int Repetitions { get; set; }
+		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string ToRuneListEdit (string str, bool keepNewLine = false)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = ToRuneListEditImplementation (str, keepNewLine);
 			}
 			return result;
@@ -54,7 +54,7 @@ namespace Benchmarks.TextFormatter {
 		public string EarlyExitStringBuilderCharSpanSlice (string str, bool keepNewLine = false)
 		{
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				result = EarlyExitStringBuilderCharSpanSliceImplementation (str, keepNewLine);
 			}
 			return result;
@@ -123,7 +123,7 @@ namespace Benchmarks.TextFormatter {
 		{
 			char[] buffer = new char[str.Length];
 			string result = string.Empty;
-			for (int i = 0; i < Repetitions; i++) {
+			for (int i = 0; i < N; i++) {
 				int charsWritten = SpanBufferImplementation (str, buffer, keepNewLine);
 				result = new string (buffer, 0, charsWritten);
 			}
@@ -197,7 +197,7 @@ namespace Benchmarks.TextFormatter {
 
 		public IEnumerable<object []> DataSource ()
 		{
-			string[] textPermutations = {
+			string[] texts = {
 				// Extreme newline scenario
 				"E\r\nx\r\nt\r\nr\r\ne\r\nm\r\ne\r\nn\r\ne\r\nw\r\nl\r\ni\r\nn\r\ne\r\ns\r\nc\r\ne\r\nn\r\na\r\nr\r\ni\r\no\r\n",
 				// Long text with few line endings
@@ -219,7 +219,7 @@ namespace Benchmarks.TextFormatter {
 
 			bool[] newLinePermutations = { true, false };
 
-			foreach (var text in textPermutations)
+			foreach (var text in texts)
 			foreach (bool keepNewLine in newLinePermutations) {
 				yield return new object [] { text, keepNewLine };
 			}
