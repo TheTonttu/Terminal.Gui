@@ -1156,12 +1156,12 @@ namespace Terminal.Gui {
 			var lineIdx = 0;
 			for (; lineIdx < lines.Count; lineIdx++) {
 				var runes = lines [lineIdx].ToRuneList ();
-				var maxRruneWidth = runes.Count > 0
+				var maxRuneWidth = runes.Count > 0
 					? runes.Max (r => Math.Max (r.GetColumns (), 1)) : 1;
-				if (runesLength + maxRruneWidth > width) {
+				if (runesLength + maxRuneWidth > width) {
 					break;
 				}
-				runesLength += maxRruneWidth;
+				runesLength += maxRuneWidth;
 			}
 			return lineIdx;
 		}
