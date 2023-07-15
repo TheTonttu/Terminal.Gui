@@ -1701,17 +1701,17 @@ namespace Terminal.Gui {
 
 			// Use "Lines" to ensure a Format (don't use "lines"))
 
-			var linesFormated = Lines;
+			var linesFormatted = Lines;
 			switch (_textDirection) {
 			case TextDirection.TopBottom_RightLeft:
 			case TextDirection.LeftRight_BottomTop:
 			case TextDirection.RightLeft_BottomTop:
 			case TextDirection.BottomTop_RightLeft:
-				linesFormated.Reverse ();
+				linesFormatted.Reverse ();
 				break;
 			}
 
-			var isVertical = IsVerticalDirection (_textDirection);
+			bool isVertical = IsVerticalDirection (_textDirection);
 			var maxBounds = bounds;
 			if (Application.Driver != null) {
 				maxBounds = containerBounds == default
@@ -1731,152 +1731,170 @@ namespace Terminal.Gui {
 			//if (Application.Driver != null) {
 			//	Application.Driver.Clip = maxBounds;
 			//}
-			var lineOffset = !isVertical && bounds.Y < 0 ? Math.Abs (bounds.Y) : 0;
+			int lineOffset = !isVertical && bounds.Y < 0 ? Math.Abs (bounds.Y) : 0;
 
-			for (int line = lineOffset; line < linesFormated.Count; line++) {
-				if ((isVertical && line > bounds.Width) || (!isVertical && line > bounds.Height))
-					continue;
-				if ((isVertical && line >= maxBounds.Left + maxBounds.Width)
-					|| (!isVertical && line >= maxBounds.Top + maxBounds.Height + lineOffset))
-
-					break;
-
-				var runes = _lines [line].ToRunes ();
-
-				switch (_textDirection) {
-				case TextDirection.RightLeft_BottomTop:
-				case TextDirection.RightLeft_TopBottom:
-				case TextDirection.BottomTop_LeftRight:
-				case TextDirection.BottomTop_RightLeft:
-					Array.Reverse (runes);
-					break;
-				}
-
-				// When text is justified, we lost left or right, so we use the direction to align. 
-
-				int x, y;
-				// Horizontal Alignment
-				if (_textAlignment == TextAlignment.Right || (_textAlignment == TextAlignment.Justified && !IsLeftToRight (_textDirection))) {
-					if (isVertical) {
-						int runesWidth = GetSumMaxCharWidth (Lines, line);
-						x = bounds.Right - runesWidth;
-						CursorPosition = bounds.Width - runesWidth + (_hotKeyPos > -1 ? _hotKeyPos : 0);
-					} else {
-						int runesWidth = GetColumns (runes);
-						x = bounds.Right - runesWidth;
-						CursorPosition = bounds.Width - runesWidth + (_hotKeyPos > -1 ? _hotKeyPos : 0);
-					}
-				} else if (_textAlignment == TextAlignment.Left || _textAlignment == TextAlignment.Justified) {
-					if (isVertical) {
-						int runesWidth = line > 0 ? GetSumMaxCharWidth (Lines, 0, line) : 0;
-						x = bounds.Left + runesWidth;
-					} else {
-						x = bounds.Left;
-					}
-					CursorPosition = _hotKeyPos > -1 ? _hotKeyPos : 0;
-				} else if (_textAlignment == TextAlignment.Centered) {
-					if (isVertical) {
-						int runesWidth = GetSumMaxCharWidth (Lines, line);
-						x = bounds.Left + line + ((bounds.Width - runesWidth) / 2);
-						CursorPosition = (bounds.Width - runesWidth) / 2 + (_hotKeyPos > -1 ? _hotKeyPos : 0);
-					} else {
-						int runesWidth = GetColumns (runes);
-						x = bounds.Left + (bounds.Width - runesWidth) / 2;
-						CursorPosition = (bounds.Width - runesWidth) / 2 + (_hotKeyPos > -1 ? _hotKeyPos : 0);
-					}
-				} else {
-					throw new ArgumentOutOfRangeException ();
-				}
-
-				// Vertical Alignment
-				if (_textVerticalAlignment == VerticalTextAlignment.Bottom || (_textVerticalAlignment == VerticalTextAlignment.Justified && !IsTopToBottom (_textDirection))) {
-					if (isVertical) {
-						y = bounds.Bottom - runes.Length;
-					} else {
-						y = bounds.Bottom - Lines.Count + line;
-					}
-				} else if (_textVerticalAlignment == VerticalTextAlignment.Top || _textVerticalAlignment == VerticalTextAlignment.Justified) {
-					if (isVertical) {
-						y = bounds.Top;
-					} else {
-						y = bounds.Top + line;
-					}
-				} else if (_textVerticalAlignment == VerticalTextAlignment.Middle) {
-					if (isVertical) {
-						int s = (bounds.Height - runes.Length) / 2;
-						y = bounds.Top + s;
-					} else {
-						int s = (bounds.Height - Lines.Count) / 2;
-						y = bounds.Top + line + s;
-					}
-				} else {
-					throw new ArgumentOutOfRangeException ();
-				}
-
-				int colOffset = bounds.X < 0 ? Math.Abs (bounds.X) : 0;
-				int start = isVertical ? bounds.Top : bounds.Left;
-				int size = isVertical ? bounds.Height : bounds.Width;
-				int current = start + colOffset;
-
-				for (int idx = (isVertical ? start - y : start - x) + colOffset; current < start + size; idx++) {
-					if (idx < 0 || x + current + colOffset < 0) {
-						current++;
+			Rune[]? rentedRuneBufferArray = null;
+			try {
+				for (int lineIdx = lineOffset; lineIdx < linesFormatted.Count; lineIdx++) {
+					if ((isVertical && lineIdx > bounds.Width) || (!isVertical && lineIdx > bounds.Height))
 						continue;
-					} else if (!fillRemaining && idx > runes.Length - 1) {
-						break;
-					}
-					if ((!isVertical && idx > maxBounds.Left + maxBounds.Width - bounds.X + colOffset)
-						|| (isVertical && idx > maxBounds.Top + maxBounds.Height - bounds.Y))
+					if ((isVertical && lineIdx >= maxBounds.Left + maxBounds.Width)
+						|| (!isVertical && lineIdx >= maxBounds.Top + maxBounds.Height + lineOffset))
 
 						break;
 
-					var rune = (Rune)' ';
-					if (isVertical) {
-						Application.Driver?.Move (x, current);
-						if (idx >= 0 && idx < runes.Length) {
-							rune = runes [idx];
-						}
-					} else {
-						Application.Driver?.Move (current, y);
-						if (idx >= 0 && idx < runes.Length) {
-							rune = runes [idx];
-						}
+					string line = _lines [lineIdx];
+					// Make sure the rented array fits the worst case, i.e. rune per char.
+					int maxLineRuneCount = line.Length;
+					if (rentedRuneBufferArray == null) {
+						rentedRuneBufferArray = ArrayPool<Rune>.Shared.Rent (maxLineRuneCount);
+					} else if (rentedRuneBufferArray.Length < maxLineRuneCount) {
+						// Resize if previously rented array is potentially too small.
+						ArrayPool<Rune>.Shared.Return (rentedRuneBufferArray);
+						rentedRuneBufferArray = ArrayPool<Rune>.Shared.Rent (maxLineRuneCount);
 					}
-					if (HotKeyPos > -1 && idx == HotKeyPos) {
-						if ((isVertical && _textVerticalAlignment == VerticalTextAlignment.Justified) ||
-						(!isVertical && _textAlignment == TextAlignment.Justified)) {
-							CursorPosition = idx - start;
-						}
-						Application.Driver?.SetAttribute (hotColor);
-						Application.Driver?.AddRune (rune);
-						Application.Driver?.SetAttribute (normalColor);
-					} else {
-						Application.Driver?.AddRune (rune);
+
+					int bufferIdx = 0;
+					int runeCount = 0;
+					foreach (var rune in line.EnumerateRunes ()) {
+						rentedRuneBufferArray [bufferIdx] = rune;
+						runeCount++;
+						bufferIdx++;
 					}
-					int runeWidth = Math.Max (rune.GetColumns (), 1);
-					if (isVertical) {
-						current++;
-					} else {
-						current += runeWidth;
-					}
-					var nextRuneWidth = idx + 1 > -1 && idx + 1 < runes.Length ? runes [idx + 1].GetColumns () : 0;
-					if (!isVertical && idx + 1 < runes.Length && current + nextRuneWidth > start + size) {
+
+					var runes = rentedRuneBufferArray.AsSpan(0, runeCount);
+
+					switch (_textDirection) {
+					case TextDirection.RightLeft_BottomTop:
+					case TextDirection.RightLeft_TopBottom:
+					case TextDirection.BottomTop_LeftRight:
+					case TextDirection.BottomTop_RightLeft:
+						runes.Reverse ();
 						break;
 					}
+
+					// When text is justified, we lost left or right, so we use the direction to align. 
+
+					int x, y;
+					// Horizontal Alignment
+					if (_textAlignment == TextAlignment.Right || (_textAlignment == TextAlignment.Justified && !IsLeftToRight (_textDirection))) {
+						if (isVertical) {
+							int runesWidth = GetSumMaxCharWidth (Lines, lineIdx);
+							x = bounds.Right - runesWidth;
+							CursorPosition = bounds.Width - runesWidth + (_hotKeyPos > -1 ? _hotKeyPos : 0);
+						} else {
+							int runesWidth = runes.GetColumns();
+							x = bounds.Right - runesWidth;
+							CursorPosition = bounds.Width - runesWidth + (_hotKeyPos > -1 ? _hotKeyPos : 0);
+						}
+					} else if (_textAlignment == TextAlignment.Left || _textAlignment == TextAlignment.Justified) {
+						if (isVertical) {
+							int runesWidth = lineIdx > 0 ? GetSumMaxCharWidth (Lines, 0, lineIdx) : 0;
+							x = bounds.Left + runesWidth;
+						} else {
+							x = bounds.Left;
+						}
+						CursorPosition = _hotKeyPos > -1 ? _hotKeyPos : 0;
+					} else if (_textAlignment == TextAlignment.Centered) {
+						if (isVertical) {
+							int runesWidth = GetSumMaxCharWidth (Lines, lineIdx);
+							x = bounds.Left + lineIdx + ((bounds.Width - runesWidth) / 2);
+							CursorPosition = (bounds.Width - runesWidth) / 2 + (_hotKeyPos > -1 ? _hotKeyPos : 0);
+						} else {
+							int runesWidth = runes.GetColumns ();
+							x = bounds.Left + (bounds.Width - runesWidth) / 2;
+							CursorPosition = (bounds.Width - runesWidth) / 2 + (_hotKeyPos > -1 ? _hotKeyPos : 0);
+						}
+					} else {
+						throw new ArgumentOutOfRangeException ();
+					}
+
+					// Vertical Alignment
+					if (_textVerticalAlignment == VerticalTextAlignment.Bottom || (_textVerticalAlignment == VerticalTextAlignment.Justified && !IsTopToBottom (_textDirection))) {
+						if (isVertical) {
+							y = bounds.Bottom - runes.Length;
+						} else {
+							y = bounds.Bottom - Lines.Count + lineIdx;
+						}
+					} else if (_textVerticalAlignment == VerticalTextAlignment.Top || _textVerticalAlignment == VerticalTextAlignment.Justified) {
+						if (isVertical) {
+							y = bounds.Top;
+						} else {
+							y = bounds.Top + lineIdx;
+						}
+					} else if (_textVerticalAlignment == VerticalTextAlignment.Middle) {
+						if (isVertical) {
+							int s = (bounds.Height - runes.Length) / 2;
+							y = bounds.Top + s;
+						} else {
+							int s = (bounds.Height - Lines.Count) / 2;
+							y = bounds.Top + lineIdx + s;
+						}
+					} else {
+						throw new ArgumentOutOfRangeException ();
+					}
+
+					int colOffset = bounds.X < 0 ? Math.Abs (bounds.X) : 0;
+					int start = isVertical ? bounds.Top : bounds.Left;
+					int size = isVertical ? bounds.Height : bounds.Width;
+					int current = start + colOffset;
+
+					for (int idx = (isVertical ? start - y : start - x) + colOffset; current < start + size; idx++) {
+						if (idx < 0 || x + current + colOffset < 0) {
+							current++;
+							continue;
+						} else if (!fillRemaining && idx > runes.Length - 1) {
+							break;
+						}
+						if ((!isVertical && idx > maxBounds.Left + maxBounds.Width - bounds.X + colOffset)
+							|| (isVertical && idx > maxBounds.Top + maxBounds.Height - bounds.Y))
+
+							break;
+
+						var rune = (Rune)' ';
+						if (isVertical) {
+							Application.Driver?.Move (x, current);
+							if (idx >= 0 && idx < runes.Length) {
+								rune = runes [idx];
+							}
+						} else {
+							Application.Driver?.Move (current, y);
+							if (idx >= 0 && idx < runes.Length) {
+								rune = runes [idx];
+							}
+						}
+						if (HotKeyPos > -1 && idx == HotKeyPos) {
+							if ((isVertical && _textVerticalAlignment == VerticalTextAlignment.Justified) ||
+							(!isVertical && _textAlignment == TextAlignment.Justified)) {
+								CursorPosition = idx - start;
+							}
+							Application.Driver?.SetAttribute (hotColor);
+							Application.Driver?.AddRune (rune);
+							Application.Driver?.SetAttribute (normalColor);
+						} else {
+							Application.Driver?.AddRune (rune);
+						}
+						int runeWidth = Math.Max (rune.GetColumns (), 1);
+						if (isVertical) {
+							current++;
+						} else {
+							current += runeWidth;
+						}
+						int nextRuneWidth = idx + 1 > -1 && idx + 1 < runes.Length ? runes [idx + 1].GetColumns () : 0;
+						if (!isVertical && idx + 1 < runes.Length && current + nextRuneWidth > start + size) {
+							break;
+						}
+					}
+				}
+			} finally {
+				if (rentedRuneBufferArray != null) {
+					ArrayPool<Rune>.Shared.Return (rentedRuneBufferArray);
 				}
 			}
+
 			//if (Application.Driver != null) {
 			//	Application.Driver.Clip = (Rect)savedClip;
 			//}
-
-			static int GetColumns (in IEnumerable<Rune> runes)
-			{
-				int runesWidth = 0;
-				foreach (var rune in runes) {
-					runesWidth += Math.Max (rune.GetColumns (), 0);
-				}
-				return runesWidth;
-			}
 		}
 	}
 }
