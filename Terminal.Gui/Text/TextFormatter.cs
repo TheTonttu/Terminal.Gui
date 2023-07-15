@@ -1748,7 +1748,7 @@ namespace Terminal.Gui {
 				case TextDirection.RightLeft_TopBottom:
 				case TextDirection.BottomTop_LeftRight:
 				case TextDirection.BottomTop_RightLeft:
-					runes = runes.Reverse ().ToArray ();
+					Array.Reverse (runes);
 					break;
 				}
 
