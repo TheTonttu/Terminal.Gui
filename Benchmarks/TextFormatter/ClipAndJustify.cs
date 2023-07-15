@@ -81,12 +81,13 @@ namespace Benchmarks.TextFormatter {
 					: text;
 			}
 
-			int maxRuneCount = text.Length;
 			Rune[]? rentedRuneArray = null;
-			Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
-				? stackalloc Rune[maxRuneCount]
-				: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
 			try {
+				int maxRuneCount = text.Length;
+				Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
+					? stackalloc Rune[maxRuneCount]
+					: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
+
 				int freeBufferIdx = 0;
 				if (Tui.TextFormatter.IsHorizontalDirection (textDirection)) {
 					int maxColumns = width;
