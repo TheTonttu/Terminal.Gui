@@ -1758,17 +1758,17 @@ namespace Terminal.Gui {
 				// Horizontal Alignment
 				if (_textAlignment == TextAlignment.Right || (_textAlignment == TextAlignment.Justified && !IsLeftToRight (_textDirection))) {
 					if (isVertical) {
-						var runesWidth = GetSumMaxCharWidth (Lines, line);
+						int runesWidth = GetSumMaxCharWidth (Lines, line);
 						x = bounds.Right - runesWidth;
 						CursorPosition = bounds.Width - runesWidth + (_hotKeyPos > -1 ? _hotKeyPos : 0);
 					} else {
-						var runesWidth = StringExtensions.ToString (runes).GetColumns ();
+						int runesWidth = GetColumns (runes);
 						x = bounds.Right - runesWidth;
 						CursorPosition = bounds.Width - runesWidth + (_hotKeyPos > -1 ? _hotKeyPos : 0);
 					}
 				} else if (_textAlignment == TextAlignment.Left || _textAlignment == TextAlignment.Justified) {
 					if (isVertical) {
-						var runesWidth = line > 0 ? GetSumMaxCharWidth (Lines, 0, line) : 0;
+						int runesWidth = line > 0 ? GetSumMaxCharWidth (Lines, 0, line) : 0;
 						x = bounds.Left + runesWidth;
 					} else {
 						x = bounds.Left;
@@ -1776,11 +1776,11 @@ namespace Terminal.Gui {
 					CursorPosition = _hotKeyPos > -1 ? _hotKeyPos : 0;
 				} else if (_textAlignment == TextAlignment.Centered) {
 					if (isVertical) {
-						var runesWidth = GetSumMaxCharWidth (Lines, line);
+						int runesWidth = GetSumMaxCharWidth (Lines, line);
 						x = bounds.Left + line + ((bounds.Width - runesWidth) / 2);
 						CursorPosition = (bounds.Width - runesWidth) / 2 + (_hotKeyPos > -1 ? _hotKeyPos : 0);
 					} else {
-						var runesWidth = StringExtensions.ToString (runes).GetColumns ();
+						int runesWidth = GetColumns (runes);
 						x = bounds.Left + (bounds.Width - runesWidth) / 2;
 						CursorPosition = (bounds.Width - runesWidth) / 2 + (_hotKeyPos > -1 ? _hotKeyPos : 0);
 					}
@@ -1803,22 +1803,22 @@ namespace Terminal.Gui {
 					}
 				} else if (_textVerticalAlignment == VerticalTextAlignment.Middle) {
 					if (isVertical) {
-						var s = (bounds.Height - runes.Length) / 2;
+						int s = (bounds.Height - runes.Length) / 2;
 						y = bounds.Top + s;
 					} else {
-						var s = (bounds.Height - Lines.Count) / 2;
+						int s = (bounds.Height - Lines.Count) / 2;
 						y = bounds.Top + line + s;
 					}
 				} else {
 					throw new ArgumentOutOfRangeException ();
 				}
 
-				var colOffset = bounds.X < 0 ? Math.Abs (bounds.X) : 0;
-				var start = isVertical ? bounds.Top : bounds.Left;
-				var size = isVertical ? bounds.Height : bounds.Width;
-				var current = start + colOffset;
+				int colOffset = bounds.X < 0 ? Math.Abs (bounds.X) : 0;
+				int start = isVertical ? bounds.Top : bounds.Left;
+				int size = isVertical ? bounds.Height : bounds.Width;
+				int current = start + colOffset;
 
-				for (var idx = (isVertical ? start - y : start - x) + colOffset; current < start + size; idx++) {
+				for (int idx = (isVertical ? start - y : start - x) + colOffset; current < start + size; idx++) {
 					if (idx < 0 || x + current + colOffset < 0) {
 						current++;
 						continue;
@@ -1853,7 +1853,7 @@ namespace Terminal.Gui {
 					} else {
 						Application.Driver?.AddRune (rune);
 					}
-					var runeWidth = Math.Max (rune.GetColumns (), 1);
+					int runeWidth = Math.Max (rune.GetColumns (), 1);
 					if (isVertical) {
 						current++;
 					} else {
@@ -1868,6 +1868,15 @@ namespace Terminal.Gui {
 			//if (Application.Driver != null) {
 			//	Application.Driver.Clip = (Rect)savedClip;
 			//}
+
+			static int GetColumns (in IEnumerable<Rune> runes)
+			{
+				int runesWidth = 0;
+				foreach (var rune in runes) {
+					runesWidth += Math.Max (rune.GetColumns (), 0);
+				}
+				return runesWidth;
+			}
 		}
 	}
 }
