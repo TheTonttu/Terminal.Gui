@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using System.Buffers;
 using System.Text;
 using Terminal.Gui;
 
@@ -69,6 +70,52 @@ namespace Benchmarks.TextFormatter {
 				i++;
 			}
 			return stringBuilder.ToString ();
+		}
+
+		[Benchmark]
+		[ArgumentsSource (nameof (DataSource))]
+		public string SpanBuffer (string text, int hotPos, Rune hotKeySpecifier)
+		{
+			string result = string.Empty;
+			for (int i = 0; i < N; i++) {
+				result = SpanBufferImplementation (text, hotPos, hotKeySpecifier);
+			}
+			return result;
+		}
+
+		private static string SpanBufferImplementation (string text, int hotPos, Rune hotKeySpecifier)
+		{
+			if (string.IsNullOrEmpty (text)) {
+				return text;
+			}
+
+			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+			char[]? rentedBufferArray = null;
+			try {
+				Span<char> buffer = text.Length <= MaxStackallocCharBufferSize
+					? stackalloc char[text.Length]
+					: (rentedBufferArray = ArrayPool<char>.Shared.Rent(text.Length));
+
+				int i = 0;
+				var remainingBuffer = buffer;
+				int totalCharsWritten = 0;
+				foreach (Rune c in text.EnumerateRunes ()) {
+					if (c == hotKeySpecifier && i == hotPos) {
+						i++;
+						continue;
+					}
+					int charsWritten = c.EncodeToUtf16 (remainingBuffer);
+					totalCharsWritten += charsWritten;
+					remainingBuffer = remainingBuffer [charsWritten..];
+					i++;
+				}
+
+				return new string (buffer [..totalCharsWritten]);
+			} finally {
+				if (rentedBufferArray != null) {
+					ArrayPool<char>.Shared.Return (rentedBufferArray);
+				}
+			}
 		}
 
 		public IEnumerable<object []> DataSource ()
