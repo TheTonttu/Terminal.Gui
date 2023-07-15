@@ -49,8 +49,8 @@ namespace Benchmarks.TextFormatter {
 			}
 
 			var enumerator = text.EnumerateRunes ();
-			int index = 0;
 			if (startIndex > -1) {
+				int index = 0;
 				// Fast forward to the start index.
 				while (index < startIndex) {
 					if (!enumerator.MoveNext ()) {
@@ -66,13 +66,11 @@ namespace Benchmarks.TextFormatter {
 				while (currentLength++ < length && enumerator.MoveNext ()) {
 					Rune rune = enumerator.Current;
 					max += Math.Max (rune.GetColumns (), 1);
-					index++;
 				}
 			} else {
 				while (enumerator.MoveNext ()) {
 					Rune rune = enumerator.Current;
 					max += Math.Max (rune.GetColumns (), 1);
-					index++;
 				}
 			}
 
