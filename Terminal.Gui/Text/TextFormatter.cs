@@ -1359,12 +1359,44 @@ namespace Terminal.Gui {
 		/// </remarks>
 		public string ReplaceHotKeyWithTag (string text, int hotPos)
 		{
-			// Set the high bit
-			var runes = text.ToRuneList ();
-			if (Rune.IsLetterOrDigit (runes [hotPos])) {
-				runes [hotPos] = new Rune ((uint)runes [hotPos].Value);
+			if (string.IsNullOrEmpty (text)) {
+				return text;
 			}
-			return StringExtensions.ToString (runes);
+
+			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+			char[]? rentedBufferArray = null;
+			try {
+				Span<char> buffer = text.Length <= MaxStackallocCharBufferSize
+					? stackalloc char[text.Length]
+					: (rentedBufferArray = ArrayPool<char>.Shared.Rent(text.Length));
+
+				var remainingBuffer = buffer;
+				bool modified = false;
+				int index = 0;
+				int totalCharsWritten = 0;
+				foreach (var rune in text.EnumerateRunes ()) {
+					var outputRune = rune;
+					if (index == hotPos && Rune.IsLetterOrDigit (rune)) {
+						outputRune = new Rune ((uint)rune.Value);
+						modified = true;
+					}
+
+					int charsWritten = outputRune.EncodeToUtf16 (remainingBuffer);
+					totalCharsWritten += charsWritten;
+					remainingBuffer = remainingBuffer [charsWritten..];
+					index++;
+				}
+
+				if (modified) {
+					return new string (buffer [..totalCharsWritten]);
+				}
+
+				return text;
+			} finally {
+				if (rentedBufferArray != null) {
+					ArrayPool<char>.Shared.Return (rentedBufferArray);
+				}
+			}
 		}
 
 		/// <summary>
@@ -1390,18 +1422,18 @@ namespace Terminal.Gui {
 				int i = 0;
 				var remainingBuffer = buffer;
 				int totalCharsWritten = 0;
-				foreach (Rune c in text.EnumerateRunes()) {
+				foreach (Rune c in text.EnumerateRunes ()) {
 					if (c == hotKeySpecifier && i == hotPos) {
 						i++;
 						continue;
 					}
 					int charsWritten = c.EncodeToUtf16 (remainingBuffer);
 					totalCharsWritten += charsWritten;
-					remainingBuffer = remainingBuffer[charsWritten..];
+					remainingBuffer = remainingBuffer [charsWritten..];
 					i++;
 				}
 
-				return new string(buffer[..totalCharsWritten]);
+				return new string (buffer [..totalCharsWritten]);
 			} finally {
 				if (rentedBufferArray != null) {
 					ArrayPool<char>.Shared.Return (rentedBufferArray);
