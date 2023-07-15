@@ -1285,10 +1285,35 @@ namespace Terminal.Gui.TextTests {
 		}
 
 		[Theory]
+		[InlineData (new string [] { "" }, 1, 1)]
+		[InlineData (new string [] { "Hello World" }, 0, 0)]
+		[InlineData (new string [] { "Hello World" }, 1, 1)]
+		[InlineData (new string [] { "Hello World" }, 2, 1)]
+		[InlineData (new string [] { "Hello World" }, 10, 1)]
+		[InlineData (new string [] { "Hello", "World" }, 1, 1)]
+		[InlineData (new string [] { "Hello", "World" }, 2, 2)]
+		[InlineData (new string [] { "Hello", "World" }, 3, 2)]
+		[InlineData (new string [] { "Hello", "World" }, 10, 2)]
+		[InlineData (new string [] { "こんにちは", "世界" }, 1, 0)]
+		[InlineData (new string [] { "こんにちは", "世界" }, 2, 1)]
+		[InlineData (new string [] { "こんにちは", "世界" }, 3, 1)]
+		[InlineData (new string [] { "こんにちは", "世界" }, 4, 2)]
+		[InlineData (new string [] { "こんにちは", "世界" }, 10, 2)]
+		[InlineData (new string [] { "Hello", "From", "Another", "World" }, 1, 1)]
+		[InlineData (new string [] { "Hello", "From", "Another", "World" }, 2, 2)]
+		[InlineData (new string [] { "Hello", "From", "Another", "World" }, 4, 4)]
+		[InlineData (new string [] { "Hello", "From", "Another", "World" }, 10, 4)]
+		public void GetMaxColsForWidth (IEnumerable<string> lines, int width, int expectedCols)
+		{
+			int actualCols = TextFormatter.GetMaxColsForWidth (lines.ToList(), width);
+			Assert.Equal (expectedCols, actualCols);
+		}
+
+		[Theory]
 		[InlineData ("test", 3, 3)]
 		[InlineData ("test", 4, 4)]
 		[InlineData ("test", 10, 4)]
-		public void GetLengthThatFits_Runelist (string text, int columns, int expectedLength)
+		public void GetLengthThatFits_RuneList (string text, int columns, int expectedLength)
 		{
 			var runes = text.ToRuneList ();
 
