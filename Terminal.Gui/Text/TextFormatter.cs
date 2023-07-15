@@ -1380,17 +1380,33 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			var stringBuilder = new StringBuilder();
-			int i = 0;
-			foreach (Rune c in text.EnumerateRunes ()) {
-				if (c == hotKeySpecifier && i == hotPos) {
+			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+			char[]? rentedBufferArray = null;
+			try {
+				Span<char> buffer = text.Length <= MaxStackallocCharBufferSize
+					? stackalloc char[text.Length]
+					: (rentedBufferArray = ArrayPool<char>.Shared.Rent(text.Length));
+
+				int i = 0;
+				var remainingBuffer = buffer;
+				int totalCharsWritten = 0;
+				foreach (Rune c in text.EnumerateRunes()) {
+					if (c == hotKeySpecifier && i == hotPos) {
+						i++;
+						continue;
+					}
+					int charsWritten = c.EncodeToUtf16 (remainingBuffer);
+					totalCharsWritten += charsWritten;
+					remainingBuffer = remainingBuffer[charsWritten..];
 					i++;
-					continue;
 				}
-				stringBuilder.AppendRune (c);
-				i++;
+
+				return new string(buffer[..totalCharsWritten]);
+			} finally {
+				if (rentedBufferArray != null) {
+					ArrayPool<char>.Shared.Return (rentedBufferArray);
+				}
 			}
-			return stringBuilder.ToString ();
 		}
 
 		#endregion // Static Members
