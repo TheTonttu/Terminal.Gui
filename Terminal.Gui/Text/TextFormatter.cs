@@ -1037,11 +1037,25 @@ namespace Terminal.Gui {
 		/// <returns>The maximum characters width.</returns>
 		public static int GetSumMaxCharWidth (List<string> lines, int startIndex = -1, int length = -1)
 		{
+			if (length == 0 || lines.Count == 0 || startIndex >= lines.Count) {
+				return 0;
+			}
+
 			var max = 0;
 			for (int i = (startIndex == -1 ? 0 : startIndex); i < (length == -1 ? lines.Count : startIndex + length); i++) {
-				var runes = lines [i];
-				if (runes.Length > 0)
-					max += runes.EnumerateRunes ().Max (r => Math.Max (r.GetColumns (), 1));
+				string line = lines [i];
+				if (line.Length == 0) {
+					continue;
+				}
+
+				int lineMax = 0;
+				foreach (var rune in line.EnumerateRunes ()) {
+					int runeWidth = Math.Max (rune.GetColumns (), 1);
+					if (runeWidth > lineMax) {
+						lineMax = runeWidth;
+					}
+				}
+				max += lineMax;
 			}
 			return max;
 		}
@@ -1056,11 +1070,38 @@ namespace Terminal.Gui {
 		/// <returns>The maximum characters width.</returns>
 		public static int GetSumMaxCharWidth (string text, int startIndex = -1, int length = -1)
 		{
-			var max = 0;
-			var runes = text.ToRunes ();
-			for (int i = (startIndex == -1 ? 0 : startIndex); i < (length == -1 ? runes.Length : startIndex + length); i++) {
-				max += Math.Max (runes [i].GetColumns (), 1);
+			if (length == 0 || string.IsNullOrEmpty (text)) {
+				return 0;
 			}
+
+			var enumerator = text.EnumerateRunes ();
+			int index = 0;
+			if (startIndex > -1) {
+				// Fast forward to the start index.
+				while (index < startIndex) {
+					if (!enumerator.MoveNext ()) {
+						return 0;
+					}
+					index++;
+				}
+			}
+
+			int max = 0;
+			if (length > -1) {
+				int currentLength = 0;
+				while (currentLength++ < length && enumerator.MoveNext ()) {
+					Rune rune = enumerator.Current;
+					max += Math.Max (rune.GetColumns (), 1);
+					index++;
+				}
+			} else {
+				while (enumerator.MoveNext ()) {
+					Rune rune = enumerator.Current;
+					max += Math.Max (rune.GetColumns (), 1);
+					index++;
+				}
+			}
+
 			return max;
 		}
 
