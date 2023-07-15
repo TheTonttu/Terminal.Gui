@@ -1193,12 +1193,18 @@ namespace Terminal.Gui {
 		/// <returns>The index of the list that fit the width.</returns>
 		public static int GetMaxColsForWidth (List<string> lines, int width)
 		{
-			var runesLength = 0;
-			var lineIdx = 0;
+			int runesLength = 0;
+			int lineIdx = 0;
 			for (; lineIdx < lines.Count; lineIdx++) {
-				var runes = lines [lineIdx].ToRuneList ();
-				var maxRuneWidth = runes.Count > 0
-					? runes.Max (r => Math.Max (r.GetColumns (), 1)) : 1;
+				string line = lines [lineIdx];
+				int maxRuneWidth = 1;
+				foreach (var rune in line.EnumerateRunes()) {
+					int runeWidth = Math.Max (rune.GetColumns (), 1);
+					if (runeWidth > maxRuneWidth) {
+						maxRuneWidth = runeWidth;
+					}
+				}
+
 				if (runesLength + maxRuneWidth > width) {
 					break;
 				}
