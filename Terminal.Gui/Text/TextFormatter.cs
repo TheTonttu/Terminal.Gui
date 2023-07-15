@@ -1380,19 +1380,19 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			// Scan 
-			string start = string.Empty;
+			var stringBuilder = new StringBuilder();
 			int i = 0;
-			foreach (Rune c in text) {
+			foreach (Rune c in text.EnumerateRunes ()) {
 				if (c == hotKeySpecifier && i == hotPos) {
 					i++;
 					continue;
 				}
-				start += c;
+				stringBuilder.AppendRune (c);
 				i++;
 			}
-			return start;
+			return stringBuilder.ToString ();
 		}
+
 		#endregion // Static Members
 
 		List<string> _lines = new List<string> ();
