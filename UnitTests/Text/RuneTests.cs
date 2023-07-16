@@ -625,6 +625,27 @@ public class RuneTests {
 	}
 
 	[Theory]
+	[InlineData("Hello World", -1, "d")]
+	[InlineData ("Hello World", 0, "H")]
+	[InlineData ("Hello World", 4, "o")]
+	[InlineData ("Hello World", 10, "d")]
+	[InlineData ("Hello World", 11, "\uFFFD")]
+	[InlineData ("こんにちは世界", -1, "界")]
+	[InlineData ("こんにちは世界", 0, "こ")]
+	[InlineData ("こんにちは世界", 4, "は")]
+	[InlineData ("こんにちは世界", 6, "界")]
+	[InlineData ("こんにちは世界", 7, "\uFFFD")]
+	public void DecodeLastRune_EndIndexParameter_AffectsReturnedRune(string text, int end, string expectedRuneText)
+	{
+		Rune expectedRune = Rune.GetRuneAt(expectedRuneText, 0);
+		int expectedSize = expectedRune.Utf8SequenceLength;
+		var expected = (expectedRune, expectedSize);
+
+		var actual = text.DecodeLastRune (end);
+		Assert.Equal (expected, actual);
+	}
+
+	[Theory]
 	[InlineData ("���", false)]
 	[InlineData ("Hello, 世界", true)]
 	[InlineData (new byte [] { 0xff, 0xfe, 0xfd }, false)]

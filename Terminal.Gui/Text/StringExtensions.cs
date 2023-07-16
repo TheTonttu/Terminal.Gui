@@ -144,9 +144,17 @@ public static class StringExtensions {
 	/// <returns></returns>
 	public static (Rune rune, int size) DecodeLastRune (this string str, int end = -1)
 	{
+		if (end <= -1) {
+			var lastRune = Rune.ReplacementChar;
+			foreach (Rune rune in str.EnumerateRunes ()) {
+				lastRune = rune;
+			}
+			return (lastRune, lastRune.Utf8SequenceLength);
+		}
+
 		int index = 0;
 		foreach (Rune rune in str.EnumerateRunes ()) {
-			if (end >= 0 && index >= end) {
+			if (index == end) {
 				return (rune, rune.Utf8SequenceLength);
 			}
 			index++;
@@ -196,10 +204,10 @@ public static class StringExtensions {
 			var remainingBuffer = buffer;
 			foreach (var rune in runes) {
 				int charsWritten = rune.EncodeToUtf16 (remainingBuffer);
-				remainingBuffer = remainingBuffer[charsWritten..];
+				remainingBuffer = remainingBuffer [charsWritten..];
 			}
 
-			return new string (buffer[..^remainingBuffer.Length]);
+			return new string (buffer [..^remainingBuffer.Length]);
 		} finally {
 			if (rentedArray != null) {
 				ArrayPool<char>.Shared.Return (rentedArray);
