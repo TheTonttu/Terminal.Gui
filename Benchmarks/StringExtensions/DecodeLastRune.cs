@@ -11,7 +11,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public (Rune rune, int size) RunesToArray (string str, int end = -1)
+		public (Rune rune, int size) RunesToArray (string str, int end)
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < N; i++) {
@@ -20,7 +20,7 @@ namespace Benchmarks.StringExtensions {
 			return result;
 		}
 
-		private static (Rune rune, int size) RunesToArrayImplementation (string str, int end)
+		private static (Rune rune, int size) RunesToArrayImplementation (string str, int end = -1)
 		{
 			var rune = str.EnumerateRunes ().ToArray () [end == -1 ? ^1 : end];
 			var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
@@ -33,7 +33,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public (Rune rune, int size) EnumerateEachRune (string str, int end = -1)
+		public (Rune rune, int size) EnumerateEachRune (string str, int end)
 		{
 			(Rune rune, int size) result = default;
 			for (int i = 0; i < N; i++) {
@@ -42,46 +42,23 @@ namespace Benchmarks.StringExtensions {
 			return result;
 		}
 
-		private static (Rune rune, int size) EnumerateEachRuneImplementation (string str, int end)
+		private static (Rune rune, int size) EnumerateEachRuneImplementation (string str, int end = -1)
 		{
+			if (end <= -1) {
+				var lastRune = Rune.ReplacementChar;
+				foreach (Rune rune in str.EnumerateRunes ()) {
+					lastRune = rune;
+				}
+				return (lastRune, lastRune.Utf8SequenceLength);
+			}
+
 			int index = 0;
 			foreach (Rune rune in str.EnumerateRunes ()) {
-				if (end >= 0 && index >= end) {
+				if (index == end) {
 					return (rune, rune.Utf8SequenceLength);
 				}
 				index++;
 			}
-			var invalid = Rune.ReplacementChar;
-			return (invalid, invalid.Utf8SequenceLength);
-		}
-
-		[Benchmark]
-		[ArgumentsSource (nameof (DataSource))]
-		public (Rune rune, int size) EnumerateEachRuneMoveEndCheckOutOfLoop (string str, int end = -1)
-		{
-			(Rune rune, int size) result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateEachRuneMoveEndCheckOutOfLoopImplementation (str, end);
-			}
-			return result;
-		}
-
-		private static (Rune rune, int size) EnumerateEachRuneMoveEndCheckOutOfLoopImplementation (string str, int end)
-		{
-			int index = 0;
-			if (end >= 0) {
-				foreach (Rune rune in str.EnumerateRunes ()) {
-					if (index >= end) {
-						return (rune, rune.Utf8SequenceLength);
-					}
-					index++;
-				}
-			} else if (!string.IsNullOrEmpty (str)) {
-				// Last() causes unnecessary IEnumerator allocation
-				var lastRune = str.EnumerateRunes ().Last ();
-				return (lastRune, lastRune.Utf8SequenceLength);
-			}
-
 			var invalid = Rune.ReplacementChar;
 			return (invalid, invalid.Utf8SequenceLength);
 		}
