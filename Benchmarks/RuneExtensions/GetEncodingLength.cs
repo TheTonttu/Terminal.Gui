@@ -9,11 +9,12 @@ namespace Benchmarks.RuneExtensions {
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public int ToStringToCharArrayGetBytes (Rune rune, Encoding encoding)
+		public int ToStringToCharArrayGetBytes (Rune rune, BenchmarkFormattedEncoding encoding)
 		{
+			var actualEncoding = encoding.Encoding;
 			int result = default;
 			for (int i = 0; i < N; i++) {
-				result = ToStringToCharArrayGetBytesImplementation (rune, encoding);
+				result = ToStringToCharArrayGetBytesImplementation (rune, actualEncoding);
 			}
 			return result;
 		}
@@ -31,11 +32,12 @@ namespace Benchmarks.RuneExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public int StackallocEncodeUtf16ToByteBuffer (Rune rune, Encoding encoding)
+		public int StackallocEncodeUtf16ToByteBuffer (Rune rune, BenchmarkFormattedEncoding encoding)
 		{
+			var actualEncoding = encoding.Encoding;
 			int result = default;
 			for (int i = 0; i < N; i++) {
-				result = SpanSliceEncodeUtf16ToByteBufferImplementation (rune, encoding);
+				result = SpanSliceEncodeUtf16ToByteBufferImplementation (rune, actualEncoding);
 			}
 			return result;
 		}
@@ -66,8 +68,10 @@ namespace Benchmarks.RuneExtensions {
 		{
 			var encodings = new[] { Encoding.UTF8, Encoding.UTF32 };
 			foreach (var encoding in encodings) {
-				yield return new object [] { new Rune ('a'), encoding };
-				yield return new object [] { "𝔹".EnumerateRunes().Single(), encoding };
+				var formattedEncoding = new BenchmarkFormattedEncoding(encoding);
+
+				yield return new object [] { new Rune ('a'), formattedEncoding };
+				yield return new object [] { "𝔹".EnumerateRunes().Single(), formattedEncoding };
 			}
 		}
 	}
