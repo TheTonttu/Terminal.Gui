@@ -11,27 +11,29 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (ArrayDataSource))]
-		public string IEnumerableToArray_Array (IEnumerable<byte> bytes, Encoding? encoding = null)
+		public string IEnumerableToArray_Array (IEnumerable<byte> bytes, BenchmarkFormattedEncoding encoding)
 		{
+			var actualEncoding = encoding.Encoding;
 			string str = string.Empty;
 			for (int i = 0; i < N; i++) {
-				str = IEnumerableToArrayImplementation (bytes, ref encoding);
+				str = IEnumerableToArrayImplementation (bytes, actualEncoding);
 			}
 			return str;
 		}
 
 		[Benchmark]
 		[ArgumentsSource (nameof (ListDataSource))]
-		public string IEnumerableToArray_List (IEnumerable<byte> bytes, Encoding? encoding = null)
+		public string IEnumerableToArray_List (IEnumerable<byte> bytes, BenchmarkFormattedEncoding encoding)
 		{
+			var actualEncoding = encoding.Encoding;
 			string str = string.Empty;
 			for (int i = 0; i < N; i++) {
-				str = IEnumerableToArrayImplementation (bytes, ref encoding);
+				str = IEnumerableToArrayImplementation (bytes, actualEncoding);
 			}
 			return str;
 		}
 
-		private static string IEnumerableToArrayImplementation (IEnumerable<byte> bytes, ref Encoding? encoding)
+		private static string IEnumerableToArrayImplementation (IEnumerable<byte> bytes, Encoding? encoding)
 		{
 			if (encoding == null) {
 				encoding = Encoding.UTF8;
@@ -41,22 +43,24 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (ArrayDataSource))]
-		public string ReadOnlySpan_Array (byte [] bytes, Encoding? encoding = null)
+		public string ReadOnlySpan_Array (byte [] bytes, BenchmarkFormattedEncoding encoding)
 		{
+			var actualEncoding = encoding.Encoding;
 			string str = string.Empty;
 			for (int i = 0; i < N; i++) {
-				str = ReadOnlySpanImplementation (bytes.AsSpan (), encoding);
+				str = ReadOnlySpanImplementation (bytes.AsSpan (), actualEncoding);
 			}
 			return str;
 		}
 
 		[Benchmark]
 		[ArgumentsSource (nameof (ListDataSource))]
-		public string ReadOnlySpan_List (List<byte> bytes, Encoding? encoding = null)
+		public string ReadOnlySpan_List (List<byte> bytes, BenchmarkFormattedEncoding encoding)
 		{
+			var actualEncoding = encoding.Encoding;
 			string str = string.Empty;
 			for (int i = 0; i < N; i++) {
-				str = ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), encoding);
+				str = ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), actualEncoding);
 			}
 			return str;
 		}
@@ -69,19 +73,23 @@ namespace Benchmarks.StringExtensions {
 
 		public IEnumerable<object? []> ArrayDataSource ()
 		{
+			var encoding = new BenchmarkFormattedEncoding(Encoding.UTF8);
+
 			yield return new object? [] { Array.Empty<byte> (), null };
-			yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToArray (), null };
-			yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToArray (), null };
-			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToArray (), null };
+			yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToArray (), encoding };
+			yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToArray (), encoding };
+			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToArray (), encoding };
 		}
 
 		// TODO: Custom IParam for List<T> to display it properly in the benchmark summary.
 		public IEnumerable<object? []> ListDataSource ()
 		{
+			var encoding = new BenchmarkFormattedEncoding(Encoding.UTF8);
+
 			yield return new object? [] { new List<byte> (), null };
-			yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToList (), null };
-			yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToList (), null };
-			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToList (), null };
+			yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToList (), encoding };
+			yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToList (), encoding };
+			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToList (), encoding };
 		}
 	}
 }
