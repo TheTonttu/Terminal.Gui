@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using static Terminal.Gui.ColorScheme;
+using System.Text;
 
 namespace Terminal.Gui;
 
