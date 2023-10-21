@@ -9,12 +9,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public string StringConcat (IEnumerable<Rune> runes, int size)
-		{
-			return StringConcatImplementation (runes);
-		}
-
-		private static string StringConcatImplementation (IEnumerable<Rune> runes)
+		public string StringConcat (IEnumerable<Rune> runes)
 		{
 			var str = string.Empty;
 
@@ -27,12 +22,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string EncodeCharsStringBuilder (IEnumerable<Rune> runes, int size)
-		{
-			return EncodeCharsStringBuilderImplementation (runes);
-		}
-
-		private static string EncodeCharsStringBuilderImplementation (IEnumerable<Rune> runes)
+		public string EncodeCharsStringBuilder (IEnumerable<Rune> runes)
 		{
 			var stringBuilder = new StringBuilder ();
 			const int maxUtf16CharsPerRune = 2;
@@ -46,12 +36,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string EncodeCharsCachedStringBuilder (IEnumerable<Rune> runes, int size)
-		{
-			return EncodeCharsCachedStringBuilderImplementation (runes);
-		}
-
-		private static string EncodeCharsCachedStringBuilderImplementation (IEnumerable<Rune> runes)
+		public string EncodeCharsCachedStringBuilder (IEnumerable<Rune> runes)
 		{
 			lock (CachedStringBuilder) {
 				const int maxUtf16CharsPerRune = 2;
@@ -68,8 +53,9 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string RuneSpanStringBuilderAppend (Rune [] runes, int size)
+		public string RuneSpanStringBuilderAppend (Rune [] runes)
 		{
+			// Downside is that IEnumerable<T> cannot be used.
 			return RuneSpanStringBuilderAppendImplementation (runes);
 		}
 
@@ -90,7 +76,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string RuneSpanArrayBuffer (Rune [] runes, int size)
+		public string RuneSpanArrayBuffer (Rune [] runes)
 		{
 			return RuneSpanArrayBufferImplementation (runes);
 		}
@@ -123,7 +109,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string RuneSpanArrayBufferExactStackallocSize (Rune [] runes, int size)
+		public string RuneSpanArrayBufferExactStackallocSize (Rune [] runes)
 		{
 			return RuneSpanArrayBufferExactStackallocSizeImplementation (runes);
 		}
@@ -154,7 +140,7 @@ namespace Benchmarks.StringExtensions {
 			}
 		}
 
-		public IEnumerable<object []> DataSource ()
+		public IEnumerable<object> DataSource ()
 		{
 			string textSource =
 				"""
@@ -165,13 +151,12 @@ namespace Benchmarks.StringExtensions {
 				Śúśṕéńd́íśśé śít́ áḿét́ áŕćú út́ áŕćú f́áúćíb́úś v́áŕíúś. V́ív́áḿúś śít́ áḿét́ ḿáx́íḿúś d́íáḿ. Ńáḿ éx́ ĺéό, ṕh́áŕét́ŕá éú ĺόb́όŕt́íś át́, t́ŕíśt́íq́úé út́ f́éĺíś.
 				""";
 
-			// Extra parameter as workaround to single parameter grouping different length arrays to same baseline making comparison difficult.
 			int[] sizes = {
 				1, 10, 100, textSource.Length / 2, textSource.Length
 			};
 
 			foreach (int size in sizes) {
-				yield return new object [] { textSource.EnumerateRunes ().Take (size).ToArray (), size };
+				yield return textSource.EnumerateRunes ().Take (size).ToArray ();
 			}
 		}
 	}
