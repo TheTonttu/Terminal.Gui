@@ -5,21 +5,9 @@ namespace Benchmarks.RuneExtensions {
 	[MemoryDiagnoser]
 	public class IsSurrogatePair {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public bool ToString (Rune rune)
-		{
-			bool result = default;
-			for (int i = 0; i < N; i++) {
-				ToStringImplementation (rune);
-			}
-			return result;
-		}
-
-		private static bool ToStringImplementation (Rune rune)
 		{
 			return char.IsSurrogatePair (rune.ToString (), 0);
 		}
@@ -27,15 +15,6 @@ namespace Benchmarks.RuneExtensions {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public bool StackallocChars (Rune rune)
-		{
-			bool result = default;
-			for (int i = 0; i < N; i++) {
-				StackallocCharsImplementation (rune);
-			}
-			return result;
-		}
-
-		public static bool StackallocCharsImplementation (Rune rune)
 		{
 			Span<char> charBuffer = stackalloc char[2];
 			int charsWritten = rune.EncodeToUtf16 (charBuffer);
@@ -45,15 +24,6 @@ namespace Benchmarks.RuneExtensions {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public bool EarlyExitBmp (Rune rune)
-		{
-			bool result = default;
-			for (int i = 0; i < N; i++) {
-				EarlyExitBmpImplementation (rune);
-			}
-			return result;
-		}
-
-		public static bool EarlyExitBmpImplementation (Rune rune)
 		{
 			if (rune.IsBmp) {
 				return false;

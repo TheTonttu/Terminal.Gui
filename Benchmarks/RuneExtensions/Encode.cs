@@ -5,21 +5,9 @@ namespace Benchmarks.RuneExtensions {
 	[MemoryDiagnoser]
 	public class Encode {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int ToStringGetBytes (Rune rune, byte [] dest, int start = 0, int count = -1)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = ToStringGetBytesInternal (rune, dest, start, count);
-			}
-			return result;
-		}
-
-		private static int ToStringGetBytesInternal (Rune rune, byte [] dest, int start, int count)
 		{
 			var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
 			var length = 0;
@@ -34,15 +22,6 @@ namespace Benchmarks.RuneExtensions {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public int StackallocEncodeUtf8 (Rune rune, byte [] dest, int start = 0, int count = -1)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = StackallocUtf8EncodeInternal (rune, dest, start, count);
-			}
-			return result;
-		}
-
-		private static int StackallocUtf8EncodeInternal (Rune rune, byte [] dest, int start, int count)
 		{
 			// Span length is 1-4
 			Span<byte> bytes = stackalloc byte[rune.Utf8SequenceLength];
@@ -70,8 +49,9 @@ namespace Benchmarks.RuneExtensions {
 			foreach (var rune in runes) {
 				yield return new object [] { rune, new byte [16], 0, -1 };
 				yield return new object [] { rune, new byte [16], 8, -1 };
-				// Does not work in original (baseline) implementation
-				//yield return new object [] { rune, new byte [16], 8, 8 };
+				// Do not work in original (baseline) implementation
+				// yield return new object [] { rune, new byte [16], 8, 4 };
+				// yield return new object [] { rune, new byte [16], 8, 8 };
 			}
 		}
 	}

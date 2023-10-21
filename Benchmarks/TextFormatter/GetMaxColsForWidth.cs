@@ -4,21 +4,10 @@ using Terminal.Gui;
 namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class GetMaxColsForWidth {
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int RuneListPerLine (List<string> lines, int width)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = RuneListPerLineImplementation (lines, width);
-			}
-			return result;
-		}
-
-		private static int RuneListPerLineImplementation (List<string> lines, int width)
 		{
 			var runesLength = 0;
 			var lineIdx = 0;
@@ -37,15 +26,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public int EnumerateRunesPerLine (List<string> lines, int width)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateRunesPerLineImplementation (lines, width);
-			}
-			return result;
-		}
-
-		private static int EnumerateRunesPerLineImplementation (List<string> lines, int width)
 		{
 			int runesLength = 0;
 			int lineIdx = 0;
@@ -66,7 +46,6 @@ namespace Benchmarks.TextFormatter {
 			}
 			return lineIdx;
 		}
-
 
 		public IEnumerable<object []> DataSource ()
 		{

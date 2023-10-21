@@ -7,21 +7,19 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class ReplaceCRLFWithSpace {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
+		private char [] _buffer = default!;
+
+		[GlobalSetup]
+		public void GlobalSetup ()
+		{
+			// Buffer for span buffer implementation.
+			// The idea is that application would reuse a buffer and resize it whenever needed throughout the application lifetime.
+			_buffer = new char [1000];
+		}
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string ToRuneListReplace (string str)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = ToRuneListReplaceImplementation (str);
-			}
-			return result;
-		}
-
-		private static string ToRuneListReplaceImplementation (string str)
 		{
 			var runes = str.ToRuneList ();
 			for (int i = 0; i < runes.Count; i++) {
@@ -47,15 +45,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public string EarlyExitStringBuilderCharSpanSlice (string str)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = EarlyExitStringBuilderCharSpanSliceImplementation (str);
-			}
-			return result;
-		}
-
-		internal static string EarlyExitStringBuilderCharSpanSliceImplementation (string str)
 		{
 			const string newlineChars = "\r\n";
 
@@ -110,13 +99,9 @@ namespace Benchmarks.TextFormatter {
 		[ArgumentsSource (nameof (DataSource))]
 		public string SpanBuffer (string str)
 		{
-			char[] buffer = new char[str.Length];
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				int charsWritten = SpanBufferImplementation (str, buffer);
-				result = new string (buffer, 0, charsWritten);
-			}
-			return result;
+
+			int charsWritten = SpanBufferImplementation (str, _buffer);
+			return new string (_buffer, 0, charsWritten);
 		}
 
 		private static int SpanBufferImplementation (in ReadOnlySpan<char> str, in Span<char> buffer)

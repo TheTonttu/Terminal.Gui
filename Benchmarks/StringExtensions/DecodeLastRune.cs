@@ -6,21 +6,9 @@ namespace Benchmarks.StringExtensions {
 	[MemoryDiagnoser]
 	public class DecodeLastRune {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public (Rune rune, int size) RunesToArray (string str, int end)
-		{
-			(Rune rune, int size) result = default;
-			for (int i = 0; i < N; i++) {
-				result = RunesToArrayImplementation (str, end);
-			}
-			return result;
-		}
-
-		private static (Rune rune, int size) RunesToArrayImplementation (string str, int end = -1)
+		public (Rune rune, int size) RunesToArray (string str, int end = -1)
 		{
 			var rune = str.EnumerateRunes ().ToArray () [end == -1 ? ^1 : end];
 			var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
@@ -33,16 +21,7 @@ namespace Benchmarks.StringExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public (Rune rune, int size) EnumerateEachRune (string str, int end)
-		{
-			(Rune rune, int size) result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateEachRuneImplementation (str, end);
-			}
-			return result;
-		}
-
-		private static (Rune rune, int size) EnumerateEachRuneImplementation (string str, int end = -1)
+		public (Rune rune, int size) EnumerateEachRune (string str, int end = -1)
 		{
 			if (end <= -1) {
 				var lastRune = Rune.ReplacementChar;
@@ -74,7 +53,6 @@ namespace Benchmarks.StringExtensions {
 				Śúśṕéńd́íśśé śít́ áḿét́ áŕćú út́ áŕćú f́áúćíb́úś v́áŕíúś. V́ív́áḿúś śít́ áḿét́ ḿáx́íḿúś d́íáḿ. Ńáḿ éx́ ĺéό, ṕh́áŕét́ŕá éú ĺόb́όŕt́íś át́, t́ŕíśt́íq́úé út́ f́éĺíś.
 				""";
 
-
 			string[] texts = {
 				Tui.StringExtensions.ToString(textSource.EnumerateRunes().Take(1)),
 				Tui.StringExtensions.ToString(textSource.EnumerateRunes().Take(10)),
@@ -83,8 +61,10 @@ namespace Benchmarks.StringExtensions {
 			};
 
 			foreach (var text in texts) {
+				int midPoint = text.EnumerateRunes ().Count () / 2;
+
 				yield return new object [] { text, 1 };
-				yield return new object [] { text, text.EnumerateRunes ().Count () / 2 };
+				yield return new object [] { text, midPoint };
 				yield return new object [] { text, -1 };
 			}
 		}

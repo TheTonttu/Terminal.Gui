@@ -7,21 +7,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class GetSumMaxCharWidth_String {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public int IterateRuneList (string text, int startIndex, int length)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = IterateRuneListImplementation (text, startIndex, length);
-			}
-			return result;
-		}
-
-		private static int IterateRuneListImplementation (string text, int startIndex = -1, int length = -1)
+		public int IterateRuneList (string text, int startIndex = -1, int length = -1)
 		{
 			var max = 0;
 			var runes = text.ToRunes ();
@@ -33,16 +21,7 @@ namespace Benchmarks.TextFormatter {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public int EnumerateRunes (string text, int startIndex, int length)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateRunesImplementation (text, startIndex, length);
-			}
-			return result;
-		}
-
-		private static int EnumerateRunesImplementation (string text, int startIndex = -1, int length = -1)
+		public int EnumerateRunes (string text, int startIndex = -1, int length = -1)
 		{
 			if (length == 0 || string.IsNullOrEmpty (text)) {
 				return 0;
@@ -109,9 +88,9 @@ namespace Benchmarks.TextFormatter {
 				};
 
 				foreach (int startIndex in indexes)
-					foreach (int length in lengths) {
-						yield return new object [] { text, startIndex, length };
-					}
+				foreach (int length in lengths) {
+					yield return new object [] { text, startIndex, length };
+				}
 			}
 		}
 	}

@@ -7,21 +7,10 @@ using Tui = Terminal.Gui;
 namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class WordWrapText {
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public List<string> Original (string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
-		{
-			List<string> result = new();
-			for (int i = 0; i < N; i++) {
-				result = OriginalImplementation (text, width, preserveTrailingSpaces, tabWidth, textDirection);
-			}
-			return result;
-		}
-
-		private static List<string> OriginalImplementation (string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
+		public List<string> Original (string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -150,16 +139,7 @@ namespace Benchmarks.TextFormatter {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public List<string> ArrayBuffers (string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
-		{
-			List<string> result = new();
-			for (int i = 0; i < N; i++) {
-				result = ArrayBuffersImplementation (text, width, preserveTrailingSpaces, tabWidth, textDirection);
-			}
-			return result;
-		}
-
-		private static List<string> ArrayBuffersImplementation (
+		public List<string> ArrayBuffers (
 			string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
@@ -329,16 +309,7 @@ namespace Benchmarks.TextFormatter {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public List<string> StringAsSpanExactStackallocSizes (string text, int width, bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
-		{
-			List<string> result = new();
-			for (int i = 0; i < N; i++) {
-				result = StringAsSpanExactStackallocSizesImplementation (text, width, preserveTrailingSpaces, tabWidth, textDirection);
-			}
-			return result;
-		}
-
-		private static List<string> StringAsSpanExactStackallocSizesImplementation (
+		public List<string> StringAsSpanExactStackallocSizes (
 			string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{

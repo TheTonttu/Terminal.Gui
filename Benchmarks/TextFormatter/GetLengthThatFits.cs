@@ -6,18 +6,11 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class GetLengthThatFits {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int ToRuneList (string str, int columns)
 		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = ToRuneListImplementation (str, columns);
-			}
-			return result;
+			return ToRuneListImplementation (str, columns);
 		}
 
 		public static int ToRuneListImplementation (string text, int columns) =>
@@ -52,11 +45,7 @@ namespace Benchmarks.TextFormatter {
 		[ArgumentsSource (nameof (DataSource))]
 		public int EnumerateStringRunes (string str, int columns)
 		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateStringRunesImplementation (str.EnumerateRunes(), columns);
-			}
-			return result;
+			return EnumerateStringRunesImplementation (str.EnumerateRunes(), columns);
 		}
 
 		public static int EnumerateStringRunesImplementation (StringRuneEnumerator runes, int columns)

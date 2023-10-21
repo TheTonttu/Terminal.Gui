@@ -6,31 +6,20 @@ namespace Benchmarks.StringExtensions {
 	[MemoryDiagnoser]
 	public class BytesToString {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (ArrayDataSource))]
 		public string IEnumerableToArray_Array (IEnumerable<byte> bytes, BenchmarkFormattedEncoding encoding)
 		{
-			var actualEncoding = encoding.Encoding;
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = IEnumerableToArrayImplementation (bytes, actualEncoding);
-			}
-			return str;
+			var actualEncoding = encoding?.Encoding;
+			return IEnumerableToArrayImplementation (bytes, actualEncoding);
 		}
 
 		[Benchmark]
 		[ArgumentsSource (nameof (ListDataSource))]
 		public string IEnumerableToArray_List (IEnumerable<byte> bytes, BenchmarkFormattedEncoding encoding)
 		{
-			var actualEncoding = encoding.Encoding;
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = IEnumerableToArrayImplementation (bytes, actualEncoding);
-			}
-			return str;
+			var actualEncoding = encoding?.Encoding;
+			return IEnumerableToArrayImplementation (bytes, actualEncoding);
 		}
 
 		private static string IEnumerableToArrayImplementation (IEnumerable<byte> bytes, Encoding? encoding)
@@ -45,24 +34,16 @@ namespace Benchmarks.StringExtensions {
 		[ArgumentsSource (nameof (ArrayDataSource))]
 		public string ReadOnlySpan_Array (byte [] bytes, BenchmarkFormattedEncoding encoding)
 		{
-			var actualEncoding = encoding.Encoding;
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = ReadOnlySpanImplementation (bytes.AsSpan (), actualEncoding);
-			}
-			return str;
+			var actualEncoding = encoding?.Encoding;
+			return ReadOnlySpanImplementation (bytes.AsSpan (), actualEncoding);
 		}
 
 		[Benchmark]
 		[ArgumentsSource (nameof (ListDataSource))]
 		public string ReadOnlySpan_List (List<byte> bytes, BenchmarkFormattedEncoding encoding)
 		{
-			var actualEncoding = encoding.Encoding;
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), actualEncoding);
-			}
-			return str;
+			var actualEncoding = encoding?.Encoding;
+			return ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), actualEncoding);
 		}
 
 		private static string ReadOnlySpanImplementation (in ReadOnlySpan<byte> bytes, Encoding? encoding)

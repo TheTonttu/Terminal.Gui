@@ -6,21 +6,9 @@ namespace Benchmarks.StringExtensions {
 	[MemoryDiagnoser]
 	public class DecodeRune {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public (Rune rune, int size) RunesToArray (string str, int start = 0, int count = -1)
-		{
-			(Rune rune, int size) result = default;
-			for (int i = 0; i < N; i++) {
-				result = RunesToArrayImplementation (str, start, count);
-			}
-			return result;
-		}
-
-		private static (Rune Rune, int Size) RunesToArrayImplementation (string str, int start = 0, int count = -1)
 		{
 			var rune = str.EnumerateRunes ().ToArray () [start];
 			var bytes = Encoding.UTF8.GetBytes (rune.ToString ());
@@ -37,15 +25,6 @@ namespace Benchmarks.StringExtensions {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public (Rune rune, int size) EnumerateEachRune (string str, int start = 0, int count = -1)
-		{
-			(Rune rune, int size) result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateEachRuneImplementation (str, start, count);
-			}
-			return result;
-		}
-
-		private static (Rune Rune, int Size) EnumerateEachRuneImplementation (string str, int start = 0, int count = -1)
 		{
 			int index = 0;
 			foreach (Rune rune in str.EnumerateRunes ()) {
@@ -74,7 +53,6 @@ namespace Benchmarks.StringExtensions {
 				Óŕćí v́áŕíúś ńát́όq́úé ṕéńát́íb́úś ét́ ḿáǵńíś d́íś ṕáŕt́úŕíéńt́ ḿόńt́éś, ńáśćét́úŕ ŕíd́íćúĺúś ḿúś. F́úśćé át́ éx́ b́ĺáńd́ít́, ćόńv́áĺĺíś q́úáḿ ét́, v́úĺṕút́át́é ĺáćúś.
 				Śúśṕéńd́íśśé śít́ áḿét́ áŕćú út́ áŕćú f́áúćíb́úś v́áŕíúś. V́ív́áḿúś śít́ áḿét́ ḿáx́íḿúś d́íáḿ. Ńáḿ éx́ ĺéό, ṕh́áŕét́ŕá éú ĺόb́όŕt́íś át́, t́ŕíśt́íq́úé út́ f́éĺíś.
 				""";
-
 
 			string[] texts = {
 				Tui.StringExtensions.ToString(textSource.EnumerateRunes().Take(1)),

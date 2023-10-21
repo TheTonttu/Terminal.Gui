@@ -7,22 +7,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class RemoveHotkeySpecifier {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string StringConcat (string text, int hotPos, Rune hotKeySpecifier)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = StringConcatImplementation (text, hotPos, hotKeySpecifier);
-			}
-			return result;
-		}
-
-
-		private static string StringConcatImplementation (string text, int hotPos, Rune hotKeySpecifier)
 		{
 			if (string.IsNullOrEmpty (text)) {
 				return text;
@@ -46,15 +33,6 @@ namespace Benchmarks.TextFormatter {
 		[ArgumentsSource (nameof (DataSource))]
 		public string StringBuilderAppend (string text, int hotPos, Rune hotKeySpecifier)
 		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = StringBuilderAppendImplementation (text, hotPos, hotKeySpecifier);
-			}
-			return result;
-		}
-
-		private static string StringBuilderAppendImplementation (string text, int hotPos, Rune hotKeySpecifier)
-		{
 			if (string.IsNullOrEmpty (text)) {
 				return text;
 			}
@@ -75,15 +53,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public string SpanBuffer (string text, int hotPos, Rune hotKeySpecifier)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = SpanBufferImplementation (text, hotPos, hotKeySpecifier);
-			}
-			return result;
-		}
-
-		private static string SpanBufferImplementation (string text, int hotPos, Rune hotKeySpecifier)
 		{
 			if (string.IsNullOrEmpty (text)) {
 				return text;

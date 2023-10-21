@@ -8,21 +8,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class Justify {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public string StringSplit (string text, int width, char spaceChar, TextDirection textDirection)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = StringSplitImplementation (text, width, spaceChar, textDirection);
-			}
-			return result;
-		}
-
-		private static string StringSplitImplementation (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
+		public string StringSplit (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -63,16 +51,7 @@ namespace Benchmarks.TextFormatter {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string SpanRangeSplit (string text, int width, char spaceChar, TextDirection textDirection)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = SpanRangeSplitImplementation (text, width, spaceChar, textDirection);
-			}
-			return result;
-		}
-
-		private static string SpanRangeSplitImplementation (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
+		public string SpanRangeSplit (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~4 kiB.
 

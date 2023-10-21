@@ -6,19 +6,12 @@ namespace Benchmarks.RuneExtensions {
 	[MemoryDiagnoser]
 	public class DecodeSurrogatePair {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public bool ToStringToCharArray (Rune rune)
+		public (bool, char []?) ToStringToCharArray (Rune rune)
 		{
-			bool result = default;
-			char[]? chars;
-			for (int i = 0; i < N; i++) {
-				ToStringToCharArrayImplementation (rune, out chars);
-			}
-			return result;
+			bool result = ToStringToCharArrayImplementation (rune, out char []? chars);
+			return (result, chars);
 		}
 
 		public static bool ToStringToCharArrayImplementation (Rune rune, out char []? chars)
@@ -33,14 +26,10 @@ namespace Benchmarks.RuneExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public bool EncodeToCharArray (Rune rune)
+		public (bool, char []?) EncodeToCharArray (Rune rune)
 		{
-			bool result = default;
-			char[]? chars;
-			for (int i = 0; i < N; i++) {
-				EncodeToCharArrayImplementation (rune, out chars);
-			}
-			return result;
+			bool result = EncodeToCharArrayImplementation (rune, out char []? chars);
+			return (result, chars);
 		}
 
 		private static bool EncodeToCharArrayImplementation (Rune rune, out char []? chars)
@@ -56,14 +45,10 @@ namespace Benchmarks.RuneExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public bool InlineSurrogatePairCheck (Rune rune)
+		public (bool, char []?) InlineSurrogatePairCheck (Rune rune)
 		{
-			bool result = default;
-			char[]? chars;
-			for (int i = 0; i < N; i++) {
-				InlineSurrogatePairCheckImplementation (rune, out chars);
-			}
-			return result;
+			bool result = InlineSurrogatePairCheckImplementation (rune, out char []? chars);
+			return (result, chars);
 		}
 
 		private static bool InlineSurrogatePairCheckImplementation (Rune rune, out char []? chars)
@@ -80,14 +65,10 @@ namespace Benchmarks.RuneExtensions {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public bool EarlyExitBmp (Rune rune)
+		public (bool, char[]?) EarlyExitBmp (Rune rune)
 		{
-			bool result = default;
-			char[]? chars;
-			for (int i = 0; i < N; i++) {
-				EarlyExitBmpImplementation (rune, out chars);
-			}
-			return result;
+			bool result = EarlyExitBmpImplementation (rune, out char []? chars);
+			return (result, chars);
 		}
 
 		private static bool EarlyExitBmpImplementation (Rune rune, out char []? chars)
