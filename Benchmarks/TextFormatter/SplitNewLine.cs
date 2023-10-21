@@ -6,21 +6,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class SplitNewLine {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> ToRuneListToString (string text)
-		{
-			var result = new List<string>();
-			for (int i = 0; i < N; i++) {
-				result = ToRuneListToStringImplementation (text);
-			}
-			return result;
-		}
-
-		private static List<string> ToRuneListToStringImplementation (string text)
 		{
 			var runes = text.ToRuneList ();
 			var lines = new List<string> ();
@@ -63,15 +51,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> SliceSpanToString (string text)
-		{
-			var result = new List<string>();
-			for (int i = 0; i < N; i++) {
-				result = SliceSpanToStringImplementation (text);
-			}
-			return result;
-		}
-
-		private static List<string> SliceSpanToStringImplementation (string text)
 		{
 			if (string.IsNullOrEmpty (text)) {
 				return new () { string.Empty };

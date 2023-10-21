@@ -6,21 +6,19 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class StripCRLF {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
+		private char [] _buffer = default!;
+
+		[GlobalSetup]
+		public void GlobalSetup ()
+		{
+			// Buffer for span buffer implementation.
+			// The idea is that application would reuse a buffer and resize it whenever needed throughout the application lifetime.
+			_buffer = new char [1000];
+		}
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string ToRuneListEdit (string str, bool keepNewLine = false)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = ToRuneListEditImplementation (str, keepNewLine);
-			}
-			return result;
-		}
-
-		private static string ToRuneListEditImplementation (string str, bool keepNewLine)
 		{
 			var runes = Tui.StringExtensions.ToRuneList(str);
 			for (int i = 0; i < runes.Count; i++) {
@@ -52,15 +50,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public string EarlyExitStringBuilderCharSpanSlice (string str, bool keepNewLine = false)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = EarlyExitStringBuilderCharSpanSliceImplementation (str, keepNewLine);
-			}
-			return result;
-		}
-
-		internal static string EarlyExitStringBuilderCharSpanSliceImplementation (string str, bool keepNewLine = false)
 		{
 			const string newlineChars = "\r\n";
 
@@ -121,13 +110,8 @@ namespace Benchmarks.TextFormatter {
 		[ArgumentsSource (nameof (DataSource))]
 		public string SpanBuffer (string str, bool keepNewLine = false)
 		{
-			char[] buffer = new char[str.Length];
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				int charsWritten = SpanBufferImplementation (str, buffer, keepNewLine);
-				result = new string (buffer, 0, charsWritten);
-			}
-			return result;
+			int charsWritten = SpanBufferImplementation (str, _buffer, keepNewLine);
+			return new string (_buffer, 0, charsWritten);
 		}
 
 		internal static int SpanBufferImplementation (in ReadOnlySpan<char> str, in Span<char> buffer, bool keepNewLine = false)

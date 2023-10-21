@@ -7,21 +7,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class ReplaceHotKeyWithTag {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string RuneListToString (string text, int hotPos)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = RuneListToStringImplementation (text, hotPos);
-			}
-			return result;
-		}
-
-		private string RuneListToStringImplementation (string text, int hotPos)
 		{
 			// Set the high bit
 			var runes = Tui.StringExtensions.ToRuneList(text);
@@ -34,15 +22,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public string SpanBuffer (string text, int hotPos)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = SpanBufferImplementation (text, hotPos);
-			}
-			return result;
-		}
-
-		public string SpanBufferImplementation (string text, int hotPos)
 		{
 			if (string.IsNullOrEmpty (text)) {
 				return text;

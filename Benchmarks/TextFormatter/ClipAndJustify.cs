@@ -8,21 +8,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class ClipAndJustify {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public string RuneListPassthrough (string text, int width, bool justify, TextDirection textDirection)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = RuneListPassthroughImplementation (text, width, justify, textDirection);
-			}
-			return result;
-		}
-
-		private static string RuneListPassthroughImplementation (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
+		public string RuneListPassthrough (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -51,16 +39,7 @@ namespace Benchmarks.TextFormatter {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public string RentedRuneArray (string text, int width, bool justify, TextDirection textDirection)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = RentedRuneArrayImplementation (text, width, justify, textDirection);
-			}
-			return result;
-		}
-
-		private static string RentedRuneArrayImplementation (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
+		public string RentedRuneArray (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			const int MaxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
 

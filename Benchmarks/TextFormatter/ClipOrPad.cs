@@ -7,21 +7,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class ClipOrPad {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string LinqEnumerate (string text, int width)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = LinqEnumerateImplementation (text, width);
-			}
-			return result;
-		}
-
-		private static string LinqEnumerateImplementation (string text, int width)
 		{
 			if (string.IsNullOrEmpty (text))
 				return text;
@@ -43,15 +31,6 @@ namespace Benchmarks.TextFormatter {
 		[ArgumentsSource (nameof (DataSource))]
 		public string StringBuilderAppendRunes (string text, int width)
 		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = StringBuilderAppendRunesImplementation (text, width);
-			}
-			return result;
-		}
-
-		public static string StringBuilderAppendRunesImplementation (string text, int width)
-		{
 			if (string.IsNullOrEmpty (text))
 				return text;
 
@@ -64,7 +43,7 @@ namespace Benchmarks.TextFormatter {
 				if (remainingSpace < runeWidth) {
 					break;
 				}
-				Tui.StringBuilderExtensions.AppendRune(stringBuilder, rune);
+				Tui.StringBuilderExtensions.AppendRune (stringBuilder, rune);
 				remainingSpace -= runeWidth;
 			}
 
@@ -77,15 +56,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public string ReuseStackallocCharBuffer (string text, int width)
-		{
-			string result = string.Empty;
-			for (int i = 0; i < N; i++) {
-				result = ReuseStackallocCharBufferImplementation (text, width);
-			}
-			return result;
-		}
-
-		private static string ReuseStackallocCharBufferImplementation (string text, int width)
 		{
 			if (string.IsNullOrEmpty (text))
 				return text;

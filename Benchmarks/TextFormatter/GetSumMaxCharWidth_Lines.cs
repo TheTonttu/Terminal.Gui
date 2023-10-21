@@ -7,21 +7,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class GetSumMaxCharWidth_Lines {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
-		public int EnumerateRunesLinq (List<string> lines, int startIndex, int length)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = EnumerateRunesLinqImplementation (lines, startIndex, length);
-			}
-			return result;
-		}
-
-		private static int EnumerateRunesLinqImplementation (List<string> lines, int startIndex = -1, int length = -1)
+		public int EnumerateRunesLinq (List<string> lines, int startIndex = -1, int length = -1)
 		{
 			var max = 0;
 			for (int i = (startIndex == -1 ? 0 : startIndex); i < (length == -1 ? lines.Count : startIndex + length); i++) {
@@ -34,16 +22,7 @@ namespace Benchmarks.TextFormatter {
 
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
-		public int NestedLoop (List<string> lines, int startIndex, int length)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = NestedLoopImplementation (lines, startIndex, length);
-			}
-			return result;
-		}
-
-		public static int NestedLoopImplementation (List<string> lines, int startIndex = -1, int length = -1)
+		public int NestedLoop (List<string> lines, int startIndex = -1, int length = -1)
 		{
 			if (length == 0 || lines.Count == 0 || startIndex >= lines.Count) {
 				return 0;

@@ -4,19 +4,13 @@ using System.Text;
 namespace Benchmarks.RuneExtensions {
 	[MemoryDiagnoser]
 	public class GetEncodingLength {
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int ToStringToCharArrayGetBytes (Rune rune, BenchmarkFormattedEncoding encoding)
 		{
 			var actualEncoding = encoding.Encoding;
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = ToStringToCharArrayGetBytesImplementation (rune, actualEncoding);
-			}
-			return result;
+			return ToStringToCharArrayGetBytesImplementation (rune, actualEncoding);
 		}
 
 		private static int ToStringToCharArrayGetBytesImplementation (Rune rune, Encoding? encoding)
@@ -35,11 +29,7 @@ namespace Benchmarks.RuneExtensions {
 		public int StackallocEncodeUtf16ToByteBuffer (Rune rune, BenchmarkFormattedEncoding encoding)
 		{
 			var actualEncoding = encoding.Encoding;
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = SpanSliceEncodeUtf16ToByteBufferImplementation (rune, actualEncoding);
-			}
-			return result;
+			return SpanSliceEncodeUtf16ToByteBufferImplementation (rune, actualEncoding);
 		}
 
 		private static int SpanSliceEncodeUtf16ToByteBufferImplementation (Rune rune, Encoding? encoding = null)
@@ -66,12 +56,12 @@ namespace Benchmarks.RuneExtensions {
 
 		public IEnumerable<object []> DataSource ()
 		{
-			var encodings = new[] { Encoding.UTF8, Encoding.UTF32 };
+			var encodings = new[] { Encoding.UTF8, Encoding.Unicode, Encoding.UTF32 };
 			foreach (var encoding in encodings) {
 				var formattedEncoding = new BenchmarkFormattedEncoding(encoding);
 
 				yield return new object [] { new Rune ('a'), formattedEncoding };
-				yield return new object [] { "𝔹".EnumerateRunes().Single(), formattedEncoding };
+				yield return new object [] { "𝔹".EnumerateRunes ().Single (), formattedEncoding };
 			}
 		}
 	}

@@ -8,23 +8,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class Format {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> Original (
-			string text, int width, bool justify, bool wordWrap,
-			bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
-		{
-			var result = new List<string>();
-			for (int i = 0; i < N; i++) {
-				result = OriginalImplementation (text, width, justify, wordWrap, preserveTrailingSpaces, tabWidth, textDirection);
-			}
-			return result;
-		}
-
-		private static List<string> OriginalImplementation (
 			string text, int width, bool justify, bool wordWrap,
 			bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
@@ -70,17 +56,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> ArrayBuffer (
-			string text, int width, bool justify, bool wordWrap,
-			bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
-		{
-			var result = new List<string>();
-			for (int i = 0; i < N; i++) {
-				result = ArrayBufferImplementation (text, width, justify, wordWrap, preserveTrailingSpaces, tabWidth, textDirection);
-			}
-			return result;
-		}
-
-		private static List<string> ArrayBufferImplementation (
 			string text, int width, bool justify, bool wordWrap,
 			bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
@@ -145,17 +120,6 @@ namespace Benchmarks.TextFormatter {
 		[ArgumentsSource (nameof (DataSource))]
 		public List<string> ExactStackallocSize (
 			string text, int width, bool justify, bool wordWrap,
-			bool preserveTrailingSpaces, int tabWidth, TextDirection textDirection)
-		{
-			var result = new List<string>();
-			for (int i = 0; i < N; i++) {
-				result = ExactStackallocSizeImplementation (text, width, justify, wordWrap, preserveTrailingSpaces, tabWidth, textDirection);
-			}
-			return result;
-		}
-
-		private static List<string> ExactStackallocSizeImplementation (
-			string text, int width, bool justify, bool wordWrap,
 			bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
 			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
@@ -214,7 +178,6 @@ namespace Benchmarks.TextFormatter {
 				}
 			}
 		}
-
 
 		public IEnumerable<object []> DataSource ()
 		{

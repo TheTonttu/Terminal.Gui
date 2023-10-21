@@ -5,21 +5,13 @@ using System.Text;
 namespace Benchmarks.StringExtensions {
 	[MemoryDiagnoser]
 	public class RunesToString {
-
 		private static readonly StringBuilder CachedStringBuilder = new StringBuilder();
-
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
 
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public string StringConcat (IEnumerable<Rune> runes, int size)
 		{
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = StringConcatImplementation (runes);
-			}
-			return str;
+			return StringConcatImplementation (runes);
 		}
 
 		private static string StringConcatImplementation (IEnumerable<Rune> runes)
@@ -37,11 +29,7 @@ namespace Benchmarks.StringExtensions {
 		[ArgumentsSource (nameof (DataSource))]
 		public string EncodeCharsStringBuilder (IEnumerable<Rune> runes, int size)
 		{
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = EncodeCharsStringBuilderImplementation (runes);
-			}
-			return str;
+			return EncodeCharsStringBuilderImplementation (runes);
 		}
 
 		private static string EncodeCharsStringBuilderImplementation (IEnumerable<Rune> runes)
@@ -60,11 +48,7 @@ namespace Benchmarks.StringExtensions {
 		[ArgumentsSource (nameof (DataSource))]
 		public string EncodeCharsCachedStringBuilder (IEnumerable<Rune> runes, int size)
 		{
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = EncodeCharsCachedStringBuilderImplementation (runes);
-			}
-			return str;
+			return EncodeCharsCachedStringBuilderImplementation (runes);
 		}
 
 		private static string EncodeCharsCachedStringBuilderImplementation (IEnumerable<Rune> runes)
@@ -86,11 +70,7 @@ namespace Benchmarks.StringExtensions {
 		[ArgumentsSource (nameof (DataSource))]
 		public string RuneSpanStringBuilderAppend (Rune [] runes, int size)
 		{
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = RuneSpanStringBuilderAppendImplementation (runes);
-			}
-			return str;
+			return RuneSpanStringBuilderAppendImplementation (runes);
 		}
 
 		private static string RuneSpanStringBuilderAppendImplementation (in ReadOnlySpan<Rune> runes)
@@ -112,11 +92,7 @@ namespace Benchmarks.StringExtensions {
 		[ArgumentsSource (nameof (DataSource))]
 		public string RuneSpanArrayBuffer (Rune [] runes, int size)
 		{
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = RuneSpanArrayBufferImplementation (runes);
-			}
-			return str;
+			return RuneSpanArrayBufferImplementation (runes);
 		}
 
 		private static string RuneSpanArrayBufferImplementation (in ReadOnlySpan<Rune> runes)
@@ -149,11 +125,7 @@ namespace Benchmarks.StringExtensions {
 		[ArgumentsSource (nameof (DataSource))]
 		public string RuneSpanArrayBufferExactStackallocSize (Rune [] runes, int size)
 		{
-			string str = string.Empty;
-			for (int i = 0; i < N; i++) {
-				str = RuneSpanArrayBufferExactStackallocSizeImplementation (runes);
-			}
-			return str;
+			return RuneSpanArrayBufferExactStackallocSizeImplementation (runes);
 		}
 
 		private static string RuneSpanArrayBufferExactStackallocSizeImplementation (in ReadOnlySpan<Rune> runes)

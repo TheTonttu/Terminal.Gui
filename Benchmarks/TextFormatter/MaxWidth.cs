@@ -6,21 +6,9 @@ namespace Benchmarks.TextFormatter {
 	[MemoryDiagnoser]
 	public class MaxWidth {
 
-		[Params (1, 100, 10_000)]
-		public int N { get; set; }
-
 		[Benchmark (Baseline = true)]
 		[ArgumentsSource (nameof (DataSource))]
 		public int NestedLinq (string text, int maxColumns)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = NestedLinqImplementation (text, maxColumns);
-			}
-			return result;
-		}
-
-		private static int NestedLinqImplementation (string text, int maxColumns)
 		{
 			var result = Tui.TextFormatter.Format (text: text, width: maxColumns, justify: false, wordWrap: true);
 			var max = 0;
@@ -37,15 +25,6 @@ namespace Benchmarks.TextFormatter {
 		[Benchmark]
 		[ArgumentsSource (nameof (DataSource))]
 		public int NestedForeach (string text, int maxColumns)
-		{
-			int result = default;
-			for (int i = 0; i < N; i++) {
-				result = NestedForeachImplementation (text, maxColumns);
-			}
-			return result;
-		}
-
-		public static int NestedForeachImplementation (string text, int maxColumns)
 		{
 			var lines = Tui.TextFormatter.Format (text: text, width: maxColumns, justify: false, wordWrap: true);
 			int maxWidth = 0;
