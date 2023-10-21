@@ -62,15 +62,14 @@ namespace Benchmarks.StringExtensions {
 			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToArray (), encoding };
 		}
 
-		// TODO: Custom IParam for List<T> to display it properly in the benchmark summary.
 		public IEnumerable<object? []> ListDataSource ()
 		{
 			var encoding = new BenchmarkFormattedEncoding(Encoding.UTF8);
 
-			yield return new object? [] { new List<byte> (), null };
-			yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToList (), encoding };
-			yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToList (), encoding };
-			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToList (), encoding };
+			yield return new object? [] { new BenchmarkFormattedList<byte> (), null };
+			yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToBenchmarkList (), encoding };
+			yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToBenchmarkList (), encoding };
+			yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToBenchmarkList (), encoding };
 		}
 	}
 }
