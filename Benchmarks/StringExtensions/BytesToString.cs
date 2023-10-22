@@ -9,7 +9,7 @@ public class BytesToString {
 
 	[Benchmark (Baseline = true)]
 	[ArgumentsSource (nameof (ArrayDataSource))]
-	public string IEnumerableToArray_Array (IEnumerable<byte> bytes, BenchmarkFormattedEncoding encoding)
+	public string IEnumerableToArray_Array (IEnumerable<byte> bytes, int size, BenchmarkFormattedEncoding encoding)
 	{
 		var actualEncoding = encoding?.Encoding;
 		return IEnumerableToArrayImplementation (bytes, actualEncoding);
@@ -17,7 +17,7 @@ public class BytesToString {
 
 	[Benchmark]
 	[ArgumentsSource (nameof (ListDataSource))]
-	public string IEnumerableToArray_List (IEnumerable<byte> bytes, BenchmarkFormattedEncoding encoding)
+	public string IEnumerableToArray_List (IEnumerable<byte> bytes, int size, BenchmarkFormattedEncoding encoding)
 	{
 		var actualEncoding = encoding?.Encoding;
 		return IEnumerableToArrayImplementation (bytes, actualEncoding);
@@ -33,7 +33,7 @@ public class BytesToString {
 
 	[Benchmark]
 	[ArgumentsSource (nameof (ArrayDataSource))]
-	public string ReadOnlySpan_Array (byte [] bytes, BenchmarkFormattedEncoding encoding)
+	public string ReadOnlySpan_Array (byte [] bytes, int size, BenchmarkFormattedEncoding encoding)
 	{
 		var actualEncoding = encoding?.Encoding;
 		return ReadOnlySpanImplementation (bytes.AsSpan (), actualEncoding);
@@ -41,7 +41,7 @@ public class BytesToString {
 
 	[Benchmark]
 	[ArgumentsSource (nameof (ListDataSource))]
-	public string ReadOnlySpan_List (List<byte> bytes, BenchmarkFormattedEncoding encoding)
+	public string ReadOnlySpan_List (List<byte> bytes, int size, BenchmarkFormattedEncoding encoding)
 	{
 		var actualEncoding = encoding?.Encoding;
 		return ReadOnlySpanImplementation (CollectionsMarshal.AsSpan (bytes), actualEncoding);
@@ -57,19 +57,29 @@ public class BytesToString {
 	{
 		var encoding = new BenchmarkFormattedEncoding(Encoding.UTF8);
 
-		yield return new object? [] { Array.Empty<byte> (), null };
-		yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToArray (), encoding };
-		yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToArray (), encoding };
-		yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToArray (), encoding };
+		// Extra argument as workaround for grouping different length collections to same baseline making comparison difficult.
+		int[] sizes = {
+			10, 100, 1000
+		};
+
+		yield return new object? [] { Array.Empty<byte> (), 0, null };
+		foreach (int size in sizes) {
+			yield return new object? [] { Enumerable.Range (0, size).Select (i => (byte)i).ToArray (), size, encoding };
+		}
 	}
 
 	public IEnumerable<object? []> ListDataSource ()
 	{
 		var encoding = new BenchmarkFormattedEncoding(Encoding.UTF8);
 
-		yield return new object? [] { new BenchmarkFormattedList<byte> (), null };
-		yield return new object? [] { Enumerable.Range (0, 10).Select (i => (byte)i).ToBenchmarkList (), encoding };
-		yield return new object? [] { Enumerable.Range (0, 100).Select (i => (byte)i).ToBenchmarkList (), encoding };
-		yield return new object? [] { Enumerable.Range (0, 1000).Select (i => (byte)i).ToBenchmarkList (), encoding };
+		// Extra argument as workaround for grouping different length collections to same baseline making comparison difficult.
+		int[] sizes = {
+			10, 100, 1000
+		};
+
+		yield return new object? [] { new BenchmarkFormattedList<byte> (), 0, null };
+		foreach (int size in sizes) {
+			yield return new object? [] { Enumerable.Range (0, size).Select (i => (byte)i).ToBenchmarkList (), size, encoding };
+		}
 	}
 }
