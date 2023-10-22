@@ -78,7 +78,7 @@ public class ReplaceHotKeyWithTag {
 		foreach (string text in texts) {
 			int runeCount = text.EnumerateRunes ().Count();
 			int[] positions = {
-				0, runeCount / 2, runeCount
+				0, runeCount / 2, runeCount - 1, runeCount
 			};
 
 			foreach (int hotPos in positions) {
