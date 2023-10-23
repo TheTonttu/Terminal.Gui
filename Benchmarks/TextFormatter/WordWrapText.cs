@@ -144,8 +144,8 @@ public class WordWrapText {
 		string text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 		TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 	{
-		const int MaxStackallocStripBufferSize = 512; // ~1 kiB
-		const int MaxStackallocRuneBufferSize = 256; // ~1 kiB
+		const int maxStackallocStripBufferSize = 512; // ~1 kiB
+		const int maxStackallocRuneBufferSize = 256; // ~1 kiB
 
 		if (width < 0) {
 			throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -171,12 +171,12 @@ public class WordWrapText {
 		char[]? stripRentedArray = null;
 		Rune[]? runeRentedArray = null;
 		try {
-			Span<char> stripBuffer = text.Length <= MaxStackallocStripBufferSize
-				? stackalloc char[MaxStackallocStripBufferSize]
+			Span<char> stripBuffer = text.Length <= maxStackallocStripBufferSize
+				? stackalloc char[maxStackallocStripBufferSize]
 				: (stripRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
-			Span<Rune> runeBuffer = text.Length <= MaxStackallocRuneBufferSize
-				? stackalloc Rune[MaxStackallocRuneBufferSize]
+			Span<Rune> runeBuffer = text.Length <= maxStackallocRuneBufferSize
+				? stackalloc Rune[maxStackallocRuneBufferSize]
 				: (runeRentedArray = ArrayPool<Rune>.Shared.Rent(text.Length));
 
 			int crlfStrippedCharsWritten = Tui.TextFormatter.StripCRLF (text, stripBuffer);
@@ -340,8 +340,8 @@ public class WordWrapText {
 		in ReadOnlySpan<char> text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 		TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 	{
-		const int MaxStackallocStripBufferSize = 512; // ~1 kiB
-		const int MaxStackallocRuneBufferSize = 256; // ~1 kiB
+		const int maxStackallocStripBufferSize = 512; // ~1 kiB
+		const int maxStackallocRuneBufferSize = 256; // ~1 kiB
 
 		if (width < 0) {
 			throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -367,11 +367,11 @@ public class WordWrapText {
 		char[]? stripRentedArray = null;
 		Rune[]? runeRentedArray = null;
 		try {
-			Span<char> stripBuffer = text.Length <= MaxStackallocStripBufferSize
+			Span<char> stripBuffer = text.Length <= maxStackallocStripBufferSize
 				? stackalloc char[text.Length]
 				: (stripRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
-			Span<Rune> runeBuffer = text.Length <= MaxStackallocRuneBufferSize
+			Span<Rune> runeBuffer = text.Length <= maxStackallocRuneBufferSize
 				? stackalloc Rune[text.Length]
 				: (runeRentedArray = ArrayPool<Rune>.Shared.Rent(text.Length));
 

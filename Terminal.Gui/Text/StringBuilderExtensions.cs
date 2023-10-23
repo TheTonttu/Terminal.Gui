@@ -7,8 +7,6 @@ namespace Terminal.Gui {
 	/// </summary>>
 	public static class StringBuilderExtensions {
 
-		const int MaxRuneChars = 2;
-
 		/// <summary>
 		/// Appends rune to the StringBuilder via stack allocated char array buffer.
 		/// </summary>
@@ -17,7 +15,8 @@ namespace Terminal.Gui {
 		/// <returns>The string builder to allow additional call chaining.</returns>
 		public static StringBuilder AppendRune (this StringBuilder stringBuilder, Rune rune)
 		{
-			Span<char> buffer = stackalloc char[MaxRuneChars];
+			const int maxUtf16CharsPerRune = 2;
+			Span<char> buffer = stackalloc char[maxUtf16CharsPerRune];
 			int charsWritten = rune.EncodeToUtf16 (buffer);
 			stringBuilder.Append (buffer [..charsWritten]);
 

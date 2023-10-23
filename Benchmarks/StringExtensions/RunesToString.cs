@@ -98,14 +98,14 @@ public class RunesToString {
 
 	private static string RuneSpanArrayBufferImplementation (in ReadOnlySpan<Rune> runes)
 	{
-		const int MaxUtf16CharsPerRune = 2;
-		const int MaxStackallocBufferSize = 512; // ~1 kiB
+		const int maxUtf16CharsPerRune = 2;
+		const int maxStackallocBufferSize = 512; // ~1 kiB
 
 		char[]? rentedArray = null;
 		try {
-			int bufferSize = runes.Length * MaxUtf16CharsPerRune;
-			Span<char> buffer = bufferSize <= MaxStackallocBufferSize
-			? stackalloc char[MaxStackallocBufferSize]
+			int bufferSize = runes.Length * maxUtf16CharsPerRune;
+			Span<char> buffer = bufferSize <= maxStackallocBufferSize
+			? stackalloc char[maxStackallocBufferSize]
 			: (rentedArray = ArrayPool<char>.Shared.Rent(bufferSize));
 
 			var remainingBuffer = buffer;
@@ -131,13 +131,13 @@ public class RunesToString {
 
 	private static string RuneSpanArrayBufferExactStackallocSizeImplementation (in ReadOnlySpan<Rune> runes)
 	{
-		const int MaxUtf16CharsPerRune = 2;
-		const int MaxStackallocBufferSize = 512; // ~1 kiB
+		const int maxUtf16CharsPerRune = 2;
+		const int maxStackallocBufferSize = 512; // ~1 kiB
 
 		char[]? rentedArray = null;
 		try {
-			int bufferSize = runes.Length * MaxUtf16CharsPerRune;
-			Span<char> buffer = bufferSize <= MaxStackallocBufferSize
+			int bufferSize = runes.Length * maxUtf16CharsPerRune;
+			Span<char> buffer = bufferSize <= maxStackallocBufferSize
 			? stackalloc char[bufferSize]
 			: (rentedArray = ArrayPool<char>.Shared.Rent(bufferSize));
 

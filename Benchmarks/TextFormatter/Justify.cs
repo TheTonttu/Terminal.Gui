@@ -54,7 +54,7 @@ public class Justify {
 	[ArgumentsSource (nameof (DataSource))]
 	public string SpanRangeSplit (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 	{
-		const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~4 kiB.
+		const int wordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~4 kiB.
 
 		if (width < 0) {
 			throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -73,8 +73,8 @@ public class Justify {
 
 			// Use 1/2 of text length as potential word count for deciding between stackalloc and rent.
 			// Potentially the whole text could be spaces so we don't want to abuse the stack too much.
-			Span<Range> wordSearchBuffer = (text.Length * 0.50) <= WordSearchBufferStackallocLimit
-				? stackalloc Range [WordSearchBufferStackallocLimit]
+			Span<Range> wordSearchBuffer = (text.Length * 0.50) <= wordSearchBufferStackallocLimit
+				? stackalloc Range [wordSearchBufferStackallocLimit]
 				: (rentedWordBuffer = ArrayPool<Range>.Shared.Rent(text.Length));
 
 			int searchIdx = firstSpaceIdx + 1;

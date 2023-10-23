@@ -59,10 +59,10 @@ public class RemoveHotkeySpecifier {
 			return text;
 		}
 
-		const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+		const int maxStackallocCharBufferSize = 512; // ~1 kiB
 		char[]? rentedBufferArray = null;
 		try {
-			Span<char> buffer = text.Length <= MaxStackallocCharBufferSize
+			Span<char> buffer = text.Length <= maxStackallocCharBufferSize
 				? stackalloc char[text.Length]
 				: (rentedBufferArray = ArrayPool<char>.Shared.Rent(text.Length));
 

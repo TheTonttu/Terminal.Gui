@@ -60,7 +60,7 @@ public class Format {
 		string text, int width, bool justify, bool wordWrap,
 		bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 	{
-		const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+		const int maxStackallocCharBufferSize = 512; // ~1 kiB
 
 		if (width < 0) {
 			throw new ArgumentOutOfRangeException (nameof (width), "width cannot be negative");
@@ -74,8 +74,8 @@ public class Format {
 
 		char[]? charRentedArray = null;
 		try {
-			Span<char> charBuffer = text.Length <= MaxStackallocCharBufferSize
-				? stackalloc char[MaxStackallocCharBufferSize]
+			Span<char> charBuffer = text.Length <= maxStackallocCharBufferSize
+				? stackalloc char[maxStackallocCharBufferSize]
 				: (charRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
 			if (wordWrap == false) {
@@ -123,7 +123,7 @@ public class Format {
 		string text, int width, bool justify, bool wordWrap,
 		bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 	{
-		const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+		const int maxStackallocCharBufferSize = 512; // ~1 kiB
 
 		if (width < 0) {
 			throw new ArgumentOutOfRangeException (nameof (width), "width cannot be negative");
@@ -137,7 +137,7 @@ public class Format {
 
 		char[]? charRentedArray = null;
 		try {
-			Span<char> charBuffer = text.Length <= MaxStackallocCharBufferSize
+			Span<char> charBuffer = text.Length <= maxStackallocCharBufferSize
 				? stackalloc char[text.Length]
 				: (charRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 

@@ -42,7 +42,7 @@ public class ClipAndJustify {
 	[ArgumentsSource (nameof (DataSource))]
 	public string RentedRuneArray (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 	{
-		const int MaxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
+		const int maxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
 
 		if (width < 0) {
 			throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -64,7 +64,7 @@ public class ClipAndJustify {
 		Rune[]? rentedRuneArray = null;
 		try {
 			int maxRuneCount = text.Length;
-			Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
+			Span<Rune> runeBuffer = maxRuneCount <= maxStackallocRuneBufferSize
 				? stackalloc Rune[maxRuneCount]
 				: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
 
