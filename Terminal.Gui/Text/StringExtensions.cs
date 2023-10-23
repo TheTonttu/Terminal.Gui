@@ -12,8 +12,6 @@ namespace Terminal.Gui;
 /// </summary>
 public static class StringExtensions {
 
-	private static readonly StringBuilder CachedStringBuilder = new StringBuilder ();
-
 	/// <summary>
 	/// Repeats the string <paramref name="n"/> times.
 	/// </summary>
@@ -171,17 +169,14 @@ public static class StringExtensions {
 	public static string ToString (IEnumerable<Rune> runes)
 	{
 		// TODO: Use Microsoft.Extensions.ObjectPool to rent out StringBuilder.
-		lock (CachedStringBuilder) {
-			const int maxUtf16CharsPerRune = 2;
-			Span<char> chars = stackalloc char[maxUtf16CharsPerRune];
-			foreach (var rune in runes) {
-				int charsWritten = rune.EncodeToUtf16 (chars);
-				CachedStringBuilder.Append (chars [..charsWritten]);
-			}
-			string str = CachedStringBuilder.ToString();
-			CachedStringBuilder.Clear ();
-			return str;
+		var stringBuilder = new StringBuilder ();
+		const int maxUtf16CharsPerRune = 2;
+		Span<char> chars = stackalloc char[maxUtf16CharsPerRune];
+		foreach (var rune in runes) {
+			int charsWritten = rune.EncodeToUtf16 (chars);
+			stringBuilder.Append (chars [..charsWritten]);
 		}
+		return stringBuilder.ToString ();
 	}
 
 	/// <summary>
