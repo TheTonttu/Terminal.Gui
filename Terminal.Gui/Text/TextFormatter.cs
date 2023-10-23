@@ -498,8 +498,8 @@ namespace Terminal.Gui {
 			in ReadOnlySpan<char> text, int width, bool preserveTrailingSpaces = false, int tabWidth = 0,
 			TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
-			const int MaxStackallocStripBufferSize = 512; // ~1 kiB
-			const int MaxStackallocRuneBufferSize = 256; // ~1 kiB
+			const int maxStackallocStripBufferSize = 512; // ~1 kiB
+			const int maxStackallocRuneBufferSize = 256; // ~1 kiB
 
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -525,11 +525,11 @@ namespace Terminal.Gui {
 			char[]? stripRentedArray = null;
 			Rune[]? runeRentedArray = null;
 			try {
-				Span<char> stripBuffer = text.Length <= MaxStackallocStripBufferSize
+				Span<char> stripBuffer = text.Length <= maxStackallocStripBufferSize
 					? stackalloc char[text.Length]
 					: (stripRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
-				Span<Rune> runeBuffer = text.Length <= MaxStackallocRuneBufferSize
+				Span<Rune> runeBuffer = text.Length <= maxStackallocRuneBufferSize
 					? stackalloc Rune[text.Length]
 					: (runeRentedArray = ArrayPool<Rune>.Shared.Rent(text.Length));
 
@@ -685,7 +685,7 @@ namespace Terminal.Gui {
 		/// <returns>Justified and clipped text.</returns>
 		public static string ClipAndJustify (string text, int width, bool justify, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
-			const int MaxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
+			const int maxStackallocRuneBufferSize = 512; // Size of Rune is ~4 bytes, so the stack allocated buffer size is ~2 kiB.
 
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -707,7 +707,7 @@ namespace Terminal.Gui {
 			Rune[]? rentedRuneArray = null;
 			try {
 				int maxRuneCount = text.Length;
-				Span<Rune> runeBuffer = maxRuneCount <= MaxStackallocRuneBufferSize
+				Span<Rune> runeBuffer = maxRuneCount <= maxStackallocRuneBufferSize
 					? stackalloc Rune[maxRuneCount]
 					: (rentedRuneArray = ArrayPool<Rune>.Shared.Rent(maxRuneCount));
 
@@ -761,7 +761,7 @@ namespace Terminal.Gui {
 		/// <returns>The justified text.</returns>
 		public static string Justify (string text, int width, char spaceChar = ' ', TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
-			const int WordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~2 kiB.
+			const int wordSearchBufferStackallocLimit = 256; // Size of Range is ~8 bytes, so the stack allocated buffer size is ~2 kiB.
 
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "Width cannot be negative.");
@@ -780,8 +780,8 @@ namespace Terminal.Gui {
 
 				// Use 1/2 of text length as potential word count for deciding between stackalloc and rent.
 				// Potentially the whole text could be spaces so we don't want to abuse the stack too much.
-				Span<Range> wordSearchBuffer = (text.Length * 0.50) <= WordSearchBufferStackallocLimit
-					? stackalloc Range [WordSearchBufferStackallocLimit]
+				Span<Range> wordSearchBuffer = (text.Length * 0.50) <= wordSearchBufferStackallocLimit
+					? stackalloc Range [wordSearchBufferStackallocLimit]
 					: (rentedWordBuffer = ArrayPool<Range>.Shared.Rent(text.Length));
 
 				int searchIdx = firstSpaceIdx + 1;
@@ -924,7 +924,7 @@ namespace Terminal.Gui {
 			string text, int width, bool justify, bool wordWrap,
 			bool preserveTrailingSpaces = false, int tabWidth = 0, TextDirection textDirection = TextDirection.LeftRight_TopBottom)
 		{
-			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+			const int maxStackallocCharBufferSize = 512; // ~1 kiB
 
 			if (width < 0) {
 				throw new ArgumentOutOfRangeException (nameof (width), "width cannot be negative");
@@ -938,7 +938,7 @@ namespace Terminal.Gui {
 
 			char[]? charRentedArray = null;
 			try {
-				Span<char> charBuffer = text.Length <= MaxStackallocCharBufferSize
+				Span<char> charBuffer = text.Length <= maxStackallocCharBufferSize
 					? stackalloc char[text.Length]
 					: (charRentedArray = ArrayPool<char>.Shared.Rent (text.Length));
 
@@ -1368,10 +1368,10 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+			const int maxStackallocCharBufferSize = 512; // ~1 kiB
 			char[]? rentedBufferArray = null;
 			try {
-				Span<char> buffer = text.Length <= MaxStackallocCharBufferSize
+				Span<char> buffer = text.Length <= maxStackallocCharBufferSize
 					? stackalloc char[text.Length]
 					: (rentedBufferArray = ArrayPool<char>.Shared.Rent(text.Length));
 
@@ -1417,10 +1417,10 @@ namespace Terminal.Gui {
 				return text;
 			}
 
-			const int MaxStackallocCharBufferSize = 512; // ~1 kiB
+			const int maxStackallocCharBufferSize = 512; // ~1 kiB
 			char[]? rentedBufferArray = null;
 			try {
-				Span<char> buffer = text.Length <= MaxStackallocCharBufferSize
+				Span<char> buffer = text.Length <= maxStackallocCharBufferSize
 					? stackalloc char[text.Length]
 					: (rentedBufferArray = ArrayPool<char>.Shared.Rent(text.Length));
 
