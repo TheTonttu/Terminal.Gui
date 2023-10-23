@@ -1,6 +1,7 @@
 //
 // ConsoleDriver.cs: Base class for Terminal.Gui ConsoleDriver implementations.
 //
+using System.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
